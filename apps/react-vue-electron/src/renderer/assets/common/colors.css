@@ -1,0 +1,9 @@
+:root {
+  --ev-c-white: #ffffff;
+
+  --ev-c-black: #1b1b1f;
+
+  --ev-c-gray-1: rgba(235, 235, 245, 0.6);
+  --ev-c-gray-2: #82868d;
+  --ev-c-gray-3: #41454e;
+}

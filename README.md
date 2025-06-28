@@ -10,6 +10,11 @@ A fabric.js coordinate-plane (grid) & layers library.
 ### `fabric-layers-react`
 React components and hooks for fabric-layers-core.
 
+## Applications
+
+### `vue-layers`
+A Vue app for building Vue components that use fabric-layers-core.
+
 ## Getting Started
 
 ### Prerequisites
