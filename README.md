@@ -13,7 +13,10 @@ React components and hooks for fabric-layers-core.
 ## Applications
 
 ### `vue-layers`
-A Vue app for building Vue components that use fabric-layers-core.
+A Vue app for building Vue components that will use fabric-layers-core.
+
+### `react-vue-electron`
+An Electron app with Vue and React where that will use fabric-layers-core.
 
 ## Getting Started
 
