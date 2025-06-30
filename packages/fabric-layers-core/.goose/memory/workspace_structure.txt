@@ -1,0 +1,11 @@
+# structure packages versions
+fabric-layers is a monorepo with:
+- Core packages:
+  1. fabric-layers-core: Base fabric.js coordinate-plane & layers library
+  2. fabric-layers-react: React components/hooks for core
+- Apps:
+  1. vue-layers: Vue app using core
+  2. react-vue-electron: Electron app with both Vue/React renderers
+- Uses Nx for build system
+- Node v22.16.0 required
+

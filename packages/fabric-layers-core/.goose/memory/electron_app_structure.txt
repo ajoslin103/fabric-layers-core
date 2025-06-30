@@ -1,0 +1,12 @@
+# electron structure react vue
+react-vue-electron app structure:
+- Electron app with both React and Vue renderers
+- src/
+  - renderer/
+    - react/ - React renderer implementation
+    - vue/ - Vue renderer implementation
+    - react-entry.html - React entry point
+    - vue-entry.html - Vue entry point
+- Separate tsconfig files for React/Vue
+- Uses electron-vite for building
+
