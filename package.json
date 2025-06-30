@@ -30,7 +30,8 @@
     "vitest": "^3.2.4"
   },
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "resolutions": {
     "**/@parcel/watcher": "^2.0.0"

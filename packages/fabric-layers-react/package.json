@@ -2,8 +2,7 @@
   "name": "fabric-layers-react",
   "version": "1.0.1",
   "description": "A React wrapper around the fabric-layers-core library",
-  "main": "dist/index.js",
-  "module": "dist/esm/index.js",
+  "main": "dist/index.umd.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
