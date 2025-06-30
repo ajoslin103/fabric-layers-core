@@ -1,8 +1,9 @@
 <script setup lang="ts">
-
   import { ElectronAPI } from '@electron-toolkit/preload'
   import { CommandOrControlWRequest } from "../../types/channels";
   import { getRequestChannel, getReplyChannel } from '../../types/custom-browser-window'
+  import Versions from './components/Versions.vue'
+  import GridDemo from './components/GridDemo.vue'
 
   const logger = console
 
@@ -39,9 +40,6 @@
     console.debug(`window-focused - renderer:`, renderer)
     window.electron.ipcRenderer.send('update-menus', renderer)
   });
-
-  import Versions from './components/Versions.vue'
-
 </script>
 
 <template>
@@ -51,26 +49,10 @@
       <h1 class="text-xl font-bold">Vue Header</h1>
     </header>
 
-    <!-- Main content with 3 columns -->
-    <main class="flex-1 flex">
-      <!-- Left column -->
-      <div class="w-1/4 bg-gray-100 p-6">
-        <h2 class="text-lg font-semibold mb-4">Left Column</h2>
-        <p>Left sidebar content</p>
-      </div>
-
-      <!-- Middle column -->
-      <div class="w-1/2 p-6">
-        <h2 class="text-lg font-semibold mb-4">Main Content</h2>
-        <p>Main content area</p>
-        <Versions />
-      </div>
-
-      <!-- Right column -->
-      <div class="w-1/4 bg-gray-100 p-6">
-        <h2 class="text-lg font-semibold mb-4">Right Column</h2>
-        <p>Right sidebar content</p>
-      </div>
+    <!-- Main content -->
+    <main class="flex-1 p-6">
+      <GridDemo />
+      <Versions />
     </main>
 
     <!-- Footer -->

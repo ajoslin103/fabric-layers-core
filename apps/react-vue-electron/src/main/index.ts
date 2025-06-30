@@ -11,6 +11,14 @@ import { Logger } from 'electron-winston/main'
 const __srcFile = 'src/main/index.ts'
 const logger = new Logger()
 
+// Handle winston transport errors to prevent EIO crashes
+// logger.on('error', (error) => {
+//   // Silently ignore EIO errors from winston console transport
+//   if (error.code !== 'EIO') {
+//     console.error('Logger error:', error)
+//   }
+// })
+
 import { captureState, recoverState } from './windows/windowState'
 import { CustomBrowserWindow, getRequestChannel, getReplyChannel } from '../types/custom-browser-window'
 import { updateMenus } from './menus/menuManager'
