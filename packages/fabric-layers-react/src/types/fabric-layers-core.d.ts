@@ -4,12 +4,34 @@ declare module 'fabric-layers-core' {
     height?: number;
     showGrid?: boolean;
     mode?: string;
+    zoom?: number;
+    minZoom?: number;
+    maxZoom?: number;
+    originPin?: string;
+    pinMargin?: number;
+    zoomOverMouse?: boolean;
+    _options?: {
+      zoom?: number;
+      minZoom?: number;
+      maxZoom?: number;
+      originPin?: string;
+      pinMargin?: number;
+      zoomOverMouse?: boolean;
+      showGrid?: boolean;
+      mode?: string;
+    };
   }
 
   export class Map {
     constructor(container: HTMLElement, options?: MapOptions);
     dispose(): void;
     getCanvas(): any;
+    setOriginPin(corner: string): void;
+    setPinMargin(margin: number): void;
+    setZoomOverMouse(enabled: boolean): void;
+    setZoom(zoom: number): void;
+    setMode(mode: string): void;
+    update(): void;
   }
 
   export const Modes: {
