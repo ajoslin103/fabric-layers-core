@@ -1,0 +1,17 @@
+{
+  "devDependencies": {
+    // Add these TypeScript-related dependencies
+    "typescript": "^5.4.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/fabric-pure-browser": "^5.1.0",
+    "@types/eventemitter2": "^6.0.2",
+    "tslib": "^2.6.2"
+  },
+  "scripts": {
+    // Add or update these scripts
+    "build": "yarn clean && rollup -c rollup.config.mjs",
+    "build:watch": "rollup -c rollup.config.mjs -w",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "tsc --noEmit --watch"
+  }
+}
