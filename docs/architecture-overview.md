@@ -34,7 +34,26 @@ The fabric-layers-core architecture is based on a hierarchical relationship betw
 4. **Layer**: Components that render on the map
 5. **Specialized modules** (Grid, Measurement, Paint): Provide additional functionality
 
-![Module Dependencies](https://mermaid.ink/img/pako:eNptkU1qw0AMha8itGohF-gqi0JpIIGku-66EDRjT2LwjIxGhkDIwWfRE-UKHTsEWhbS6NN7T08ajGocFFrVHnqiwdHgwVMklY0flcHXOI5MTmfQaYYj9SxPD8pHv4dty0_wdQ5A47hCrn0dtQY_lbCmCT_UMlVpQhMo4xaDU4kjfFFG3KbMyqvXl-eXHZxJ_V8zT8yi6LSxT_pmt4IyXaD1yV2lMPqXKIsnJ_oRfb9oxcOrXlbHVcqJO04s27smtJ3J4XcwvLVCbdE7Giy3XJRlOYdzaTZlGkHrUNVkxWWpLosE1dCOZDkU4HnfXCnvWjRQuohXmlbhsOgAa2W-IaP9AWQSdL0?type=png)
+```
+Module Dependencies Hierarchy:
+
+Core
+ ├─── Geometry
+ │     ├─── Layer
+ │     │     ├─── Marker
+ │     │     └─── Vector
+ │     └─── Map
+ │           ├─── Grid
+ │           ├─── Measurement
+ │           └─── Paint
+```
+
+The diagram illustrates how:
+- Core provides the foundation for all modules
+- Geometry builds on Core to provide spatial primitives
+- Map and Layer both depend on Core and Geometry
+- Specialized modules (Grid, Measurement, Paint) depend on Map
+- Layer submodules (Marker, Vector) extend the Layer base functionality
 
 ## Key Concepts
 

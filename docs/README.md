@@ -12,9 +12,10 @@ The documentation is organized to parallel the source code structure, with dedic
 
 If you're new to fabric-layers-core, we recommend starting with these documents:
 
-1. [Architecture Overview](architecture-overview.md) - High-level understanding of the library's structure
-2. [Using Layers](using-layers.md) - Practical guide to adding and working with layers
-3. [Understanding Layers](understanding-layers.md) - Deeper dive into the layer architecture
+1. [Conceptual Guide](conceptual-guide.md) - Mental models and thinking patterns for using the library
+2. [Architecture Overview](architecture-overview.md) - High-level understanding of the library's structure
+3. [Using Layers](using-layers.md) - Practical guide to adding and working with layers
+4. [Understanding Layers](understanding-layers.md) - Deeper dive into the layer architecture
 
 ## Core Concepts
 
