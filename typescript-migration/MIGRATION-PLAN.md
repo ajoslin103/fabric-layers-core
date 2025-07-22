@@ -4,6 +4,8 @@
 
 This document outlines the plan for migrating the **packages/fabric-layers-core** library from JavaScript to TypeScript. This migration **ONLY** applies to the core package, not other packages in the monorepo. As the sole developer, this migration will enable better type safety, improved developer experience, and more maintainable code.
 
+This migration will start with the actual TypeScript conversion of core components while addressing the build configuration later.
+
 ## Pre-Migration Tasks
 
 1. **Analyze the Codebase**
