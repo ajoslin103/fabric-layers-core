@@ -1,20 +1,28 @@
-# TypeScript Conversion Instructions
+# TypeScript Conversion Instructions for fabric-layers-core
+
+These instructions apply **ONLY** to the `packages/fabric-layers-core` package within the monorepo. Other packages will remain JavaScript-based for now.
 
 ## Initial Setup
 
-1. **Install Dependencies**
+1. **Ensure Correct Node.js Version and Package Manager**
 
 ```bash
-# Make sure the correct Node version is active
+# Navigate to the monorepo root
+cd /Users/ajoslin/Development/fabric-layers
+
+# Activate the correct Node version
 nvm use
 
-# Install TypeScript and type definitions
+# Navigate to the core package
+cd packages/fabric-layers-core
+
+# Install TypeScript and type definitions using Yarn (NOT npm)
 yarn add -D typescript @rollup/plugin-typescript @types/fabric-pure-browser @types/eventemitter2 tslib
 ```
 
 2. **Copy Configuration Files**
 
-Copy the `tsconfig.json` and `rollup.config.mjs` files from the `typescript-migration` directory to the root of the `fabric-layers-core` package.
+Copy the `tsconfig.json` and `rollup.config.mjs` files from the `typescript-migration` directory to the `packages/fabric-layers-core` package directory.
 
 ## File Conversion Process
 

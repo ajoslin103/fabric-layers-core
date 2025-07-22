@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document outlines the plan for migrating the fabric-layers-core library from JavaScript to TypeScript. As the sole developer, this migration will enable better type safety, improved developer experience, and more maintainable code.
+This document outlines the plan for migrating the **packages/fabric-layers-core** library from JavaScript to TypeScript. This migration **ONLY** applies to the core package, not other packages in the monorepo. As the sole developer, this migration will enable better type safety, improved developer experience, and more maintainable code.
 
 ## Pre-Migration Tasks
 
@@ -18,7 +18,7 @@ This document outlines the plan for migrating the fabric-layers-core library fro
 
 ## Migration Strategy
 
-The migration will follow a structured, component-by-component approach:
+The migration will follow a structured, component-by-component approach, focusing **ONLY** on files within the `packages/fabric-layers-core` directory:
 
 1. **Core Components First**
    - [ ] `core/Base.js` → `core/Base.ts`
@@ -58,15 +58,17 @@ When converting each file:
 ## Project Structure Changes
 
 ```
-fabric-layers-core/
-├── src/           # TypeScript source files (.ts)
-├── dist/          # Compiled output
-│   ├── index.cjs.js
-│   ├── index.esm.js
-│   ├── index.umd.js
-│   └── types/     # Generated .d.ts files
-├── tsconfig.json  # TypeScript configuration
-└── rollup.config.mjs  # Updated build configuration
+fabric-layers/
+└── packages/
+    └── fabric-layers-core/     # ONLY THIS PACKAGE WILL BE CONVERTED TO TYPESCRIPT
+        ├── src/                # TypeScript source files (.ts)
+        ├── dist/               # Compiled output
+        │   ├── index.cjs.js
+        │   ├── index.esm.js
+        │   ├── index.umd.js
+        │   └── types/          # Generated .d.ts files
+        ├── tsconfig.json       # TypeScript configuration
+        └── rollup.config.mjs   # Updated build configuration
 ```
 
 ## Development Workflow
