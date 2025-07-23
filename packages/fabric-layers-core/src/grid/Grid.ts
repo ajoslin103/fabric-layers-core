@@ -5,37 +5,147 @@ import {
 } from '../lib/mumath/index';
 import gridStyle from './gridStyle';
 import Axis from './Axis';
-import { Point } from '../geometry/Point';
+import { Point, PointLike } from '../geometry/Point';
 
-// constructor
-class Grid extends Base {
-  constructor(canvas, opts) {
+// Interfaces for grid state and configuration
+interface GridCenter {
+  x: number;
+  y: number;
+  zoom: number;
+}
+
+interface GridDefaults {
+  type: string;
+  name: string;
+  units: string;
+  state: Record<string, any>;
+
+  // Range params
+  minZoom: number;
+  maxZoom: number;
+  min: number;
+  max: number;
+  offset: number;
+  origin: number;
+  center: GridCenter;
+  zoom: number;
+  zoomEnabled: boolean;
+  panEnabled: boolean;
+
+  // Pin settings
+  pinnedCorner: string;
+  pinnedAbsolute: PointLike;
+  isPinned: boolean;
+  pinMargin: number;
+
+  // Style settings
+  labels: boolean;
+  fontSize: string;
+  fontFamily: string;
+  padding: number | number[];
+  color: string;
+
+  // Line settings
+  lines: boolean | ((state: GridState) => any[]);
+  tick: number;
+  tickAlign: number;
+  lineWidth: number;
+  distance: number;
+  style: string;
+  lineColor: number | boolean | string | ((state: GridState) => (string | null)[]);
+
+  // Axis settings
+  axis: boolean;
+  axisOrigin: number;
+  axisWidth: number;
+  axisColor: number | string;
+
+  // Methods
+  getCoords: (values: number[], state: GridState) => number[];
+  getRatio: (value: number, state: GridState) => number;
+  format: (v: number) => string | number;
+}
+
+interface GridState {
+  coordinate: Axis;
+  opposite?: GridState;
+  shape: [number, number];
+  grid: Grid;
+  range: number;
+  offset: number;
+  zoom: number;
+  axisColor: string;
+  axisWidth: number;
+  lineWidth: number;
+  tickAlign: number;
+  labelColor: string;
+  padding: number[];
+  fontSize: number;
+  fontFamily: string;
+  lines: number[];
+  lineColors: (string | null)[];
+  ticks: number[];
+  labels: (string | number | null)[];
+  labelCoords?: number[];
+}
+
+interface GridOptions extends Partial<GridDefaults> {
+  width?: number;
+  height?: number;
+  autostart?: boolean;
+}
+
+export class Grid extends Base {
+  // Canvas elements
+  public canvas: HTMLCanvasElement;
+  public context: CanvasRenderingContext2D;
+  
+  // Grid state
+  public state: { x: GridState; y: GridState };
+  public center: Point;
+  public axisX: Axis;
+  public axisY: Axis;
+  
+  // Configuration
+  public pixelRatio: number;
+  public autostart: boolean;
+  public interactions: boolean;
+  public defaults: GridDefaults;
+  
+  // Pin settings
+  public isPinned: boolean = false;
+  public pinnedCorner: string = 'NONE';
+  public pinnedAbsolute: PointLike = { x: 0, y: 0 };
+  public pinMargin: number = 0;
+  public zoomOverMouse: boolean = true;
+
+  constructor(canvas: HTMLCanvasElement, opts?: GridOptions) {
     super(opts);
     this.canvas = canvas;
-    this.context = this.canvas.getContext('2d');
-    this.state = {};
+    this.context = this.canvas.getContext('2d')!;
+    this.state = {} as { x: GridState; y: GridState };
     this.setDefaults();
     this.update(opts);
   }
 
-  setOriginPin(corner) {
+  setOriginPin(corner: string): void {
     this.isPinned = corner !== 'NONE';
     this.pinnedCorner = corner;
     this.emit('originpin:change', corner);
-    this.pinnedAbsolute = { x: this.getPinnedX(), y: this.getPinnedY() }
+    this.pinnedAbsolute = { x: this.getPinnedX(), y: this.getPinnedY() };
   }
 
-  setPinMargin(margin) {
+  setPinMargin(margin: number): void {
     this.pinMargin = margin;
     this.emit('pinmargin:change', margin);
   }
 
-  setZoomOverMouse(followMouse) {
+  setZoomOverMouse(followMouse: boolean): void {
     this.zoomOverMouse = followMouse;
     this.emit('zoomovermouse:change', followMouse);
   }
 
-  getPinnedX() {
+  getPinnedX(): number {
     const { width } = this.canvas;
     const effectiveWidth = width / this.center.zoom;
     const scaledMargin = this.pinMargin / this.center.zoom;
@@ -45,7 +155,7 @@ class Grid extends Base {
     return ((effectiveWidth/2) - scaledMargin);
   }
 
-  getPinnedY() {
+  getPinnedY(): number {
     const { height } = this.canvas;
     const effectiveHeight = height / this.center.zoom;
     const scaledMargin = this.pinMargin / this.center.zoom;
@@ -55,49 +165,48 @@ class Grid extends Base {
     return -(effectiveHeight/2) + scaledMargin;
   }
 
-  render() {
+  render(): this {
     this.draw();
     return this;
   }
 
-  getCenterCoords() {
+  getCenterCoords(): { x: number; y: number } {
     let state = this.state.x;
     let [width, height] = state.shape;
     let [pt, pr, pb, pl] = state.padding;
-    let axisCoords = state.opposite.coordinate.getCoords(
+    let axisCoords = state.opposite!.coordinate.getCoords(
       [state.coordinate.axisOrigin],
-      state.opposite
+      state.opposite!
     );
     const y = pt + axisCoords[1] * (height - pt - pb);
     state = this.state.y;
     [width, height] = state.shape;
     [pt, pr, pb, pl] = state.padding;
-    axisCoords = state.opposite.coordinate.getCoords([state.coordinate.axisOrigin], state.opposite);
+    axisCoords = state.opposite!.coordinate.getCoords([state.coordinate.axisOrigin], state.opposite!);
     const x = pl + axisCoords[0] * (width - pr - pl);
     return { x, y };
   }
 
-  setSize(width, height) {
+  setSize(width: number, height: number): void {
     this.setWidth(width);
     this.setHeight(height);
   }
 
-  setWidth(width) {
+  setWidth(width: number): void {
     this.canvas.width = width;
   }
 
-  setHeight(height) {
+  setHeight(height: number): void {
     this.canvas.height = height;
   }
 
   // re-evaluate lines, calc options for renderer
-  update(opts) {
-    if (!opts) opts = {};
-    const shape = [this.canvas.width, this.canvas.height];
+  update(opts?: Partial<GridOptions>): this {
+    const shape: [number, number] = [this.canvas.width, this.canvas.height];
 
     // recalc state
-    this.state.x = this.calcCoordinate(this.axisX, shape, this);
-    this.state.y = this.calcCoordinate(this.axisY, shape, this);
+    this.state.x = this.calcCoordinate(this.axisX, shape);
+    this.state.y = this.calcCoordinate(this.axisY, shape);
     this.state.x.opposite = this.state.y;
     this.state.y.opposite = this.state.x;
     this.emit('update', opts);
@@ -105,16 +214,17 @@ class Grid extends Base {
   }
 
   // re-evaluate lines, calc options for renderer
-  update2(center) {
+  update2(center: GridCenter): void {
     if (this.isPinned) {
       center.x = this.getPinnedX();
       center.y = this.getPinnedY();
     }
-    const shape = [this.canvas.width, this.canvas.height];
+    const shape: [number, number] = [this.canvas.width, this.canvas.height];
     Object.assign(this.center, center);
+    
     // recalc state
-    this.state.x = this.calcCoordinate(this.axisX, shape, this);
-    this.state.y = this.calcCoordinate(this.axisY, shape, this);
+    this.state.x = this.calcCoordinate(this.axisX, shape);
+    this.state.y = this.calcCoordinate(this.axisY, shape);
     this.state.x.opposite = this.state.y;
     this.state.y.opposite = this.state.x;
     this.emit('update', center);
@@ -127,12 +237,13 @@ class Grid extends Base {
   }
 
   // get state object with calculated params, ready for rendering
-  calcCoordinate(coord, shape) {
-    const state = {
+  calcCoordinate(coord: Axis, shape: [number, number]): GridState {
+    const state: GridState = {
       coordinate: coord,
       shape,
       grid: this
-    };
+    } as GridState;
+
     // calculate real offset/range
     state.range = coord.getRange(state);
     state.offset = clamp(
@@ -142,6 +253,7 @@ class Grid extends Base {
     );
 
     state.zoom = coord.zoom;
+
     // calc style
     state.axisColor = typeof coord.axisColor === 'number'
       ? alpha(coord.color, coord.axisColor)
@@ -151,14 +263,16 @@ class Grid extends Base {
     state.lineWidth = coord.lineWidth;
     state.tickAlign = coord.tickAlign;
     state.labelColor = state.color;
+
     // get padding
     if (typeof coord.padding === 'number') {
       state.padding = Array(4).fill(coord.padding);
     } else if (coord.padding instanceof Function) {
       state.padding = coord.padding(state);
     } else {
-      state.padding = coord.padding;
+      state.padding = coord.padding as number[];
     }
+
     // calc font
     if (typeof coord.fontSize === 'number') {
       state.fontSize = coord.fontSize;
@@ -167,40 +281,42 @@ class Grid extends Base {
       state.fontSize = units[0] * toPx(units[1]);
     }
     state.fontFamily = coord.fontFamily || 'sans-serif';
+
     // get lines stops, including joined list of values
-    let lines;
+    let lines: number[];
     if (coord.lines instanceof Function) {
       lines = coord.lines(state);
     } else {
-      lines = coord.lines || [];
+      lines = (coord.lines === true ? [] : coord.lines as number[]) || [];
     }
     state.lines = lines;
+
     // calc colors
     if (coord.lineColor instanceof Function) {
       state.lineColors = coord.lineColor(state);
     } else if (Array.isArray(coord.lineColor)) {
       state.lineColors = coord.lineColor;
     } else {
-      let color = alpha(coord.color, coord.lineColor);
-      if (typeof coord.lineColor !== 'number') {
-        color = coord.lineColor === false || coord.lineColor == null ? null : coord.color;
-      }
+      let color = typeof coord.lineColor === 'number' 
+        ? alpha(coord.color, coord.lineColor)
+        : coord.lineColor === false || coord.lineColor == null ? null : coord.color;
       state.lineColors = Array(lines.length).fill(color);
     }
+
     // calc ticks
-    let ticks;
+    let ticks: number[];
     if (coord.ticks instanceof Function) {
       ticks = coord.ticks(state);
     } else if (Array.isArray(coord.ticks)) {
       ticks = coord.ticks;
     } else {
-      const tick = coord.ticks === true || coord.ticks === true
-        ? state.axisWidth * 2 : coord.ticks || 0;
+      const tick = coord.ticks === true ? state.axisWidth * 2 : coord.ticks || 0;
       ticks = Array(lines.length).fill(tick);
     }
     state.ticks = ticks;
+
     // calc labels
-    let labels;
+    let labels: (string | number | null)[];
     if (coord.labels === true) labels = state.lines;
     else if (coord.labels instanceof Function) {
       labels = coord.labels(state);
@@ -212,6 +328,7 @@ class Grid extends Base {
       labels = Array(state.lines.length).fill(null);
     }
     state.labels = labels;
+
     // convert hashmap ticks/labels to lines + colors
     if (isObj(ticks)) {
       state.ticks = Array(lines.length).fill(0);
@@ -220,7 +337,6 @@ class Grid extends Base {
       state.labels = Array(state.lines.length).fill(null);
     }
     if (isObj(ticks)) {
-      // eslint-disable-next-line guard-for-in
       Object.keys(ticks).forEach((value, tick) => {
         state.ticks.push(tick);
         state.lines.push(parseFloat(value));
@@ -241,7 +357,7 @@ class Grid extends Base {
     return state;
   }
 
-  setDefaults() {
+  setDefaults(): void {
     this.pixelRatio = window.devicePixelRatio;
     this.autostart = true;
     this.interactions = true;
@@ -297,14 +413,9 @@ class Grid extends Base {
         axisColor: 0.8,
 
         // stub methods
-        // return coords for the values, redefined by axes
         getCoords: () => [0, 0, 0, 0],
-
-        // return 0..1 ratio based on value/offset/range, redefined by axes
         getRatio: () => 0,
-
-        // default label formatter
-        format: v => v
+        format: (v: number) => v
       },
       gridStyle,
       this._options
@@ -316,8 +427,8 @@ class Grid extends Base {
     this.axisX = Object.assign({}, this.defaults, {
       orientation: 'x',
       offset: this.center.x,
-      getCoords: (values, state) => {
-        const coords = [];
+      getCoords: (values: number[], state: GridState) => {
+        const coords: number[] = [];
         if (!values) return coords;
         for (let i = 0; i < values.length; i += 1) {
           const t = state.coordinate.getRatio(values[i], state);
@@ -328,15 +439,15 @@ class Grid extends Base {
         }
         return coords;
       },
-      getRange: state => state.shape[0] * state.coordinate.zoom,
-      // FIXME: handle infinity case here
-      getRatio: (value, state) => (value - state.offset) / state.range
+      getRange: (state: GridState) => state.shape[0] * state.coordinate.zoom,
+      getRatio: (value: number, state: GridState) => (value - state.offset) / state.range
     });
+
     this.axisY = Object.assign({}, this.defaults, {
       orientation: 'y',
       offset: this.center.y,
-      getCoords: (values, state) => {
-        const coords = [];
+      getCoords: (values: number[], state: GridState) => {
+        const coords: number[] = [];
         if (!values) return coords;
         for (let i = 0; i < values.length; i += 1) {
           const t = state.coordinate.getRatio(values[i], state);
@@ -347,8 +458,8 @@ class Grid extends Base {
         }
         return coords;
       },
-      getRange: state => state.shape[1] * state.coordinate.zoom,
-      getRatio: (value, state) => 1 - (value - state.offset) / state.range
+      getRange: (state: GridState) => state.shape[1] * state.coordinate.zoom,
+      getRatio: (value: number, state: GridState) => 1 - (value - state.offset) / state.range
     });
 
     Object.assign(this, this.defaults);
@@ -357,45 +468,45 @@ class Grid extends Base {
     this.center = new Point(this.center);
   }
 
-  // draw grid to the canvas
-  draw() {
+  // Draw methods
+  draw(): this {
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawLines(this.state.x);
     this.drawLines(this.state.y);
     return this;
   }
 
-  // lines instance draw
-  drawLines(state) {
-    // draw lines and sublines
-    if (!state || !state.coordinate) return;
+  drawLines(state: GridState): void {
+    if (!state?.coordinate) return;
 
     const ctx = this.context;
     const [width, height] = state.shape;
-    const left = 0;
-    const top = 0;
     const [pt, pr, pb, pl] = state.padding;
 
-    let axisRatio = state.opposite.coordinate.getRatio(state.coordinate.axisOrigin, state.opposite);
+    let axisRatio = state.opposite!.coordinate.getRatio(state.coordinate.axisOrigin, state.opposite!);
     axisRatio = clamp(axisRatio, 0, 1);
     const coords = state.coordinate.getCoords(state.lines, state);
-    // draw state.lines
-    ctx.lineWidth = 1; // state.lineWidth/2.;
+
+    // draw lines
+    ctx.lineWidth = 1;
     for (let i = 0, j = 0; i < coords.length; i += 4, j += 1) {
       const color = state.lineColors[j];
       if (!color) continue;
+      
       ctx.strokeStyle = color;
       ctx.beginPath();
-      const x1 = left + pl + coords[i] * (width - pr - pl);
-      const y1 = top + pt + coords[i + 1] * (height - pb - pt);
-      const x2 = left + pl + coords[i + 2] * (width - pr - pl);
-      const y2 = top + pt + coords[i + 3] * (height - pb - pt);
+      const x1 = pl + coords[i] * (width - pr - pl);
+      const y1 = pt + coords[i + 1] * (height - pb - pt);
+      const x2 = pl + coords[i + 2] * (width - pr - pl);
+      const y2 = pt + coords[i + 3] * (height - pb - pt);
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
       ctx.closePath();
     }
-    const normals = [];
+
+    // Calculate normals
+    const normals: number[] = [];
     for (let i = 0; i < coords.length; i += 4) {
       const x1 = coords[i];
       const y1 = coords[i + 1];
@@ -407,10 +518,12 @@ class Grid extends Base {
       normals.push(xDif / dist);
       normals.push(yDif / dist);
     }
-    // calc state.labels/tick coords
-    const tickCoords = [];
+
+    // Calculate tick and label coordinates
+    const tickCoords: number[] = [];
     state.labelCoords = [];
     const ticks = state.ticks;
+
     for (let i = 0, j = 0, k = 0; i < normals.length; k += 1, i += 2, j += 4) {
       const x1 = coords[j];
       const y1 = coords[j + 1];
@@ -429,16 +542,17 @@ class Grid extends Base {
       state.labelCoords.push(normals[i] * xDif + x1);
       state.labelCoords.push(normals[i + 1] * yDif + y1);
     }
+
     // draw ticks
     if (ticks.length) {
       ctx.lineWidth = state.axisWidth / 2;
       ctx.beginPath();
       for (let i = 0, j = 0; i < tickCoords.length; i += 4, j += 1) {
-        if (almost(state.lines[j], state.opposite.coordinate.axisOrigin)) continue;
-        const x1 = left + pl + tickCoords[i] * (width - pl - pr);
-        const y1 = top + pt + tickCoords[i + 1] * (height - pt - pb);
-        const x2 = left + pl + tickCoords[i + 2] * (width - pl - pr);
-        const y2 = top + pt + tickCoords[i + 3] * (height - pt - pb);
+        if (almost(state.lines[j], state.opposite!.coordinate.axisOrigin)) continue;
+        const x1 = pl + tickCoords[i] * (width - pl - pr);
+        const y1 = pt + tickCoords[i + 1] * (height - pt - pb);
+        const x2 = pl + tickCoords[i + 2] * (width - pl - pr);
+        const y2 = pt + tickCoords[i + 3] * (height - pt - pb);
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
       }
@@ -446,17 +560,18 @@ class Grid extends Base {
       ctx.stroke();
       ctx.closePath();
     }
+
     // draw axis
     if (state.coordinate.axis && state.axisColor) {
-      const axisCoords = state.opposite.coordinate.getCoords(
+      const axisCoords = state.opposite!.coordinate.getCoords(
         [state.coordinate.axisOrigin],
-        state.opposite
+        state.opposite!
       );
       ctx.lineWidth = state.axisWidth / 2;
-      const x1 = left + pl + clamp(axisCoords[0], 0, 1) * (width - pr - pl);
-      const y1 = top + pt + clamp(axisCoords[1], 0, 1) * (height - pt - pb);
-      const x2 = left + pl + clamp(axisCoords[2], 0, 1) * (width - pr - pl);
-      const y2 = top + pt + clamp(axisCoords[3], 0, 1) * (height - pt - pb);
+      const x1 = pl + clamp(axisCoords[0], 0, 1) * (width - pr - pl);
+      const y1 = pt + clamp(axisCoords[1], 0, 1) * (height - pt - pb);
+      const x2 = pl + clamp(axisCoords[2], 0, 1) * (width - pr - pl);
+      const y2 = pt + clamp(axisCoords[3], 0, 1) * (height - pt - pb);
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
@@ -464,45 +579,48 @@ class Grid extends Base {
       ctx.stroke();
       ctx.closePath();
     }
-    // draw state.labels
+
+    // draw labels
     this.drawLabels(state);
   }
 
-  drawLabels(state) {
-    if (state.labels) {
-      const ctx = this.context;
-      const [width, height] = state.shape;
-      const [pt, pr, pb, pl] = state.padding;
+  drawLabels(state: GridState): void {
+    if (!state.labels) return;
 
-      ctx.font = `300 ${state.fontSize}px ${state.fontFamily}`;
-      ctx.fillStyle = state.labelColor;
-      ctx.textBaseline = 'top';
-      const textHeight = state.fontSize;
-      const indent = state.axisWidth + 1.5;
-      const textOffset = state.tickAlign < 0.5
-        ? -textHeight - state.axisWidth * 2 : state.axisWidth * 2;
-      const isOpp = state.coordinate.orientation === 'y' && !state.opposite.disabled;
-      for (let i = 0; i < state.labels.length; i += 1) {
-        let label = state.labels[i];
-        if (label == null) continue;
+    const ctx = this.context;
+    const [width, height] = state.shape;
+    const [pt, pr, pb, pl] = state.padding;
 
-        if (isOpp && almost(state.lines[i], state.opposite.coordinate.axisOrigin)) continue;
+    ctx.font = `300 ${state.fontSize}px ${state.fontFamily}`;
+    ctx.fillStyle = state.labelColor;
+    ctx.textBaseline = 'top';
+    const textHeight = state.fontSize;
+    const indent = state.axisWidth + 1.5;
+    const textOffset = state.tickAlign < 0.5
+      ? -textHeight - state.axisWidth * 2 
+      : state.axisWidth * 2;
+    const isOpp = state.coordinate.orientation === 'y' && !state.opposite!.disabled;
 
-        const textWidth = ctx.measureText(label).width;
+    for (let i = 0; i < state.labels.length; i += 1) {
+      let label = state.labels[i];
+      if (label == null) continue;
 
-        let textLeft = state.labelCoords[i * 2] * (width - pl - pr) + indent + pl;
+      if (isOpp && almost(state.lines[i], state.opposite!.coordinate.axisOrigin)) continue;
 
-        if (state.coordinate.orientation === 'y') {
-          textLeft = clamp(textLeft, indent, width - textWidth - 1 - state.axisWidth);
-          label *= -1;
-        }
+      const textWidth = ctx.measureText(String(label)).width;
+      let textLeft = state.labelCoords![i * 2] * (width - pl - pr) + indent + pl;
 
-        let textTop = state.labelCoords[i * 2 + 1] * (height - pt - pb) + textOffset + pt;
-        if (state.coordinate.orientation === 'x') {
-          textTop = clamp(textTop, 0, height - textHeight - textOffset);
-        }
-        ctx.fillText(label, textLeft, textTop);
+      if (state.coordinate.orientation === 'y') {
+        textLeft = clamp(textLeft, indent, width - textWidth - 1 - state.axisWidth);
+        label = Number(label) * -1;
       }
+
+      let textTop = state.labelCoords![i * 2 + 1] * (height - pt - pb) + textOffset + pt;
+      if (state.coordinate.orientation === 'x') {
+        textTop = clamp(textTop, 0, height - textHeight - textOffset);
+      }
+
+      ctx.fillText(String(label), textLeft, textTop);
     }
   }
 }
