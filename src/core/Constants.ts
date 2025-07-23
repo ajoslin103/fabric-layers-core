@@ -71,12 +71,12 @@ export const ICON: IconConfig = {
   anchor: [64, 64]
 };
 
-// Extend Fabric Object prototype with custom methods and properties
-declare module 'fabric-pure-browser' {
-  interface Object {
-    getBounds(): Point[];
-  }
-}
+// // Extend Fabric Object prototype with custom methods and properties
+// declare module 'fabric-pure-browser' {
+//   interface Object {
+//     getBounds(): Point[];
+//   }
+// }
 
 // Set default properties for all Fabric Objects
 const proto = FabricObject.prototype;
@@ -88,8 +88,6 @@ proto.transparentCorners = false;
 proto.centeredScaling = true;
 proto.cornerColor = 'blue';
 proto.borderColor = 'blue';
-proto.borderOpacity = 0.7;
-proto.cornerOpacity = 0.7;
 proto.cornerStrokeColor = 'blue';
 proto.borderColor = '#ff0099';
 proto.cornerColor = '#00eaff';
@@ -103,7 +101,7 @@ Group.prototype.objectCaching = true;
 Group.prototype.selectionBackgroundColor = 'rgba(45,207,171,0.25)';
 
 // Add custom method to Fabric Object prototype
-FabricObject.prototype.getBounds = function getBounds(): Point[] {
+(FabricObject.prototype as any).getBounds = function getBounds(): Point[] {
   const coords: Point[] = [];
   coords.push(new Point(this.left - this.width / 2.0, this.top - this.height / 2.0));
   coords.push(new Point(this.left + this.width / 2.0, this.top + this.height / 2.0));
