@@ -1,8 +1,8 @@
-# Fabric Layers v1.1.6
+# Fabric Layers Core v1.1.6
 
 An interactive coordinate-plane, grid, and layer management library for [fabric.js](https://fabricjs.com/) canvases.
 
-`fabric-layers` is based on the excellent original work of [ReactIndoorMapping](https://github.com/martinwairegi/ReactIndoorMapping) featured in this [blog post](https://blog.logrocket.com/build-indoor-maps-fabric-js-react/). The library has been refactored to be framework-agnostic and upgraded to TypeScript while maintaining all the features of the original.
+`fabric-layers-core` is based on the excellent original work "IndoorJS" of [Mudin Ibrahim](https://github.com/mudin)
 
 ## 🚀 Running the Grid Demo
 
@@ -153,6 +153,6 @@ The library uses strict TypeScript configuration for maximum type safety.
 
 ## 📄 Licenses
 
-MIT © 2025 [Allen Joslin](https://github.com/ajoslin103) (current author of fabric-layers)
+MIT © 2025 [Allen Joslin](https://github.com/ajoslin103) (current author of fabric-layers-core)
 
-MIT © 2022 [Martin Wairegi](https://github.com/martinwairegi) (original author of ReactIndoorMapping)
+MIT © 2019 [Mudin Ibrahim](https://github.com/mudin) (original author of IndoorJS)
