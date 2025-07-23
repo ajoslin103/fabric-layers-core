@@ -1,4 +1,4 @@
-import { Canvas } from 'fabric-pure-browser';
+import { Canvas } from 'fabric';
 import { Mode } from '../core/Constants';
 
 // Type for the constructor of the class being mixed into

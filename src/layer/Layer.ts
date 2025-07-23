@@ -1,4 +1,4 @@
-import { Object as FabricObject } from 'fabric-pure-browser';
+import { Object as FabricObject } from 'fabric';
 import Base from '../core/Base';
 import { Map } from '../map/Map';
 

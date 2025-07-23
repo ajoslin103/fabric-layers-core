@@ -1,4 +1,4 @@
-import { Canvas, Object as FabricObject } from 'fabric-pure-browser';
+import { Canvas, Object as FabricObject } from 'fabric';
 import { EventEmitter2 } from 'eventemitter2';
 
 export interface LayerOptions {

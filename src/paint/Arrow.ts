@@ -1,4 +1,4 @@
-import { Group, Object as FabricObject, Point as FabricPoint, Polyline, IGroupOptions } from 'fabric-pure-browser';
+import { Group, Object as FabricObject, Point as FabricPoint, Polyline, IGroupOptions } from 'fabric';
 import ArrowHead from './ArrowHead';
 import { PointLike } from '../geometry/Point';
 

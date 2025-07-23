@@ -1,4 +1,4 @@
-import { Text } from 'fabric-pure-browser';
+import { Text } from 'fabric';
 import { Layer, LayerOptions } from './Layer';
 import { Group } from './Group';
 import { Point, PointLike } from '../geometry/Point';

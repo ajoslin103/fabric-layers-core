@@ -45,7 +45,7 @@ To create a custom layer that uses one of the basic shape primitives, you can ex
 
 ```javascript
 import { Layer } from 'fabric-layers-core';
-import { fabric } from 'fabric-pure-browser';
+import { fabric } from 'fabric';
 
 export class CustomCircleLayer extends Layer {
   constructor(position, radius, options = {}) {

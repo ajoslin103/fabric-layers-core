@@ -1,4 +1,4 @@
-import { IEvent } from 'fabric-pure-browser';
+import { IEvent } from 'fabric';
 import { Map } from '../map/Map';
 import Measurer from './Measurer';
 import { PointLike } from '../geometry/Point';

@@ -1,7 +1,7 @@
 /* global describe, it, before */
 
 import chai from 'chai';
-import { fabric } from 'fabric-pure-browser';
+import { fabric } from 'fabric';
 import { Map, Marker } from '../src';
 
 window.fabric = fabric;

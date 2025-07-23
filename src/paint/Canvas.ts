@@ -1,4 +1,4 @@
-import { Canvas as FabricCanvas, IEvent, StaticCanvas, Object as FabricObject, Circle, Path, IText } from 'fabric-pure-browser';
+import { Canvas as FabricCanvas, IEvent, StaticCanvas, Object as FabricObject, Circle, Path, IText } from 'fabric';
 import Base from '../core/Base';
 import { Arrow } from './Arrow';
 

@@ -1,4 +1,4 @@
-import { Canvas, Circle, Line, Text, IEvent } from 'fabric-pure-browser';
+import { Canvas, Circle, Line, Text, IEvent } from 'fabric';
 import { Point, PointLike } from '../geometry/Point';
 import { Map } from '../map/Map';
 

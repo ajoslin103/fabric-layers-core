@@ -1,4 +1,4 @@
-import { Canvas, Object as FabricObject } from 'fabric-pure-browser';
+import { Canvas, Object as FabricObject } from 'fabric';
 import panzoom from '../lib/panzoom';
 import { clamp } from '../lib/mumath/index';
 

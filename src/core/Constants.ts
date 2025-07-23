@@ -1,5 +1,7 @@
 import { Point } from '../geometry/Point.js';
-import { Object as FabricObject, Group, Canvas } from 'fabric-pure-browser';
+
+import { fabric } from 'fabric';
+const { Object: FabricObject, Group } = fabric;
 
 export enum Mode {
   SELECT = 'SELECT',

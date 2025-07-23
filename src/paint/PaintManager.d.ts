@@ -1,4 +1,4 @@
-import { Canvas, IEvent, Object as FabricObject } from 'fabric-pure-browser';
+import { Canvas, IEvent, Object as FabricObject } from 'fabric';
 
 export interface PaintManagerOptions {
   width?: number;

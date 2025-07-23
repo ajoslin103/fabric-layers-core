@@ -1,4 +1,4 @@
-import fabric from 'fabric-pure-browser';
+import fabric from 'fabric';
 
 import { version, name } from '../package.json';
 

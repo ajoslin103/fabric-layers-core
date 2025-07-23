@@ -1,4 +1,4 @@
-import { Group as FabricGroup, Object as FabricObject, IGroupOptions } from 'fabric-pure-browser';
+import { Group as FabricGroup, Object as FabricObject, IGroupOptions } from 'fabric';
 import { Point } from '../geometry/Point';
 
 export interface GroupOptions extends IGroupOptions {

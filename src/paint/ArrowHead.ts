@@ -1,4 +1,4 @@
-import { Triangle } from 'fabric-pure-browser';
+import { Triangle } from 'fabric';
 
 export interface ArrowHeadOptions {
   headLength?: number;

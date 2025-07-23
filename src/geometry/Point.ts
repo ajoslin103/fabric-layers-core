@@ -1,4 +1,5 @@
-import { Point as FabricPoint } from 'fabric-pure-browser';
+import { fabric } from 'fabric';
+const { Point: FabricPoint } = fabric;
 
 // Type definition for a point-like object
 export interface PointLike {
