@@ -36,16 +36,16 @@ export interface Layer {
 }
 
 // Extend fabric Object to include our custom properties
-declare module 'fabric-pure-browser' {
-  interface Object {
-    class?: string;
-    keepOnZoom?: boolean;
-    parent?: any;
-    zIndex?: number;
-    orgYaw?: number;
-    getBounds(): Point[];
-  }
-}
+// declare module 'fabric-pure-browser' {
+//   interface Object {
+//     class?: string;
+//     keepOnZoom?: boolean;
+//     parent?: any;
+//     zIndex?: number;
+//     orgYaw?: number;
+//     getBounds(): Point[];
+//   }
+// }
 
 export class Map extends mix(Base).with(ModesMixin) {
   public container: HTMLElement;
