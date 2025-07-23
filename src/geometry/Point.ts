@@ -44,28 +44,34 @@ export class Point extends FabricPoint {
   /**
    * Set the X coordinate
    * @param x - The X coordinate
+   * @returns this Point instance for chaining
    */
-  setX(x: number): void {
+  setX(x: number): Point {
     this.x = Number(x) || 0;
+    return this;
   }
 
   /**
    * Set the Y coordinate
    * @param y - The Y coordinate
+   * @returns this Point instance for chaining
    */
-  setY(y: number): void {
+  setY(y: number): Point {
     this.y = Number(y) || 0;
+    return this;
   }
 
   /**
    * Copy coordinates from another point
    * @param point - The point to copy from
+   * @returns this Point instance for chaining
    */
-  copy(point: PointLike): void {
+  copy(point: PointLike): Point {
     if (point && typeof point === 'object' && 'x' in point && 'y' in point) {
       this.x = Number(point.x) || 0;
       this.y = Number(point.y) || 0;
     }
+    return this;
   }
 
   /**
