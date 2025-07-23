@@ -1,14 +1,24 @@
+import { Point as FabricPoint } from 'fabric-pure-browser';
+
+// Type definition for a point-like object
+export interface PointLike {
+  x: number;
+  y: number;
+}
+
 /**
  * Point class extending fabric.Point with additional functionality
- * @param {number|{x: number, y: number}|Array<number>} x - X coordinate or point object/array
- * @param {number} [y] - Y coordinate if first parameter is a number
  */
-export class Point extends fabric.Point {
+export class Point extends FabricPoint {
   /**
-   * @param {number|{x: number, y: number}|Array<number>} x - X coordinate or point object/array
-   * @param {number} [y] - Y coordinate if first parameter is a number
+   * Create a new Point instance
+   * @param x - X coordinate or point object/array
+   * @param y - Y coordinate if first parameter is a number
    */
-  constructor(x, y) {
+  constructor(
+    x?: number | PointLike | [number, number],
+    y?: number
+  ) {
     let xCoord = 0;
     let yCoord = 0;
 
@@ -32,25 +42,25 @@ export class Point extends fabric.Point {
 
   /**
    * Set the X coordinate
-   * @param {number} x - The X coordinate
+   * @param x - The X coordinate
    */
-  setX(x) {
+  setX(x: number): void {
     this.x = Number(x) || 0;
   }
 
   /**
    * Set the Y coordinate
-   * @param {number} y - The Y coordinate
+   * @param y - The Y coordinate
    */
-  setY(y) {
+  setY(y: number): void {
     this.y = Number(y) || 0;
   }
 
   /**
    * Copy coordinates from another point
-   * @param {Point|{x: number, y: number}} point - The point to copy from
+   * @param point - The point to copy from
    */
-  copy(point) {
+  copy(point: PointLike): void {
     if (point && typeof point === 'object' && 'x' in point && 'y' in point) {
       this.x = Number(point.x) || 0;
       this.y = Number(point.y) || 0;
@@ -59,17 +69,20 @@ export class Point extends fabric.Point {
 
   /**
    * Get coordinates as an array
-   * @returns {[number, number]} Array containing [x, y] coordinates
+   * @returns Array containing [x, y] coordinates
    */
-  getArray() {
+  getArray(): [number, number] {
     return [this.x, this.y];
   }
 }
 
 /**
  * Factory function to create a new Point
- * @param {number|{x: number, y: number}|Array<number>} x - X coordinate or point object/array
- * @param {number} [y] - Y coordinate if first parameter is a number
- * @returns {Point} A new Point instance
+ * @param x - X coordinate or point object/array
+ * @param y - Y coordinate if first parameter is a number
+ * @returns A new Point instance
  */
-export const point = (x, y) => new Point(x, y);
+export const point = (
+  x?: number | PointLike | [number, number],
+  y?: number
+): Point => new Point(x, y);
