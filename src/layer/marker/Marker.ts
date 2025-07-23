@@ -1,11 +1,48 @@
-import { Layer } from '../Layer';
+import { fabric } from 'fabric';
+import { Layer, LayerOptions } from '../Layer';
 import { Group } from '../Group';
-import { Point } from '../../geometry/Point';
+import { Point, PointLike } from '../../geometry/Point';
 import { Connector } from '../Connector';
 
+export interface MarkerOptions extends LayerOptions {
+  rotation?: number;
+  yaw?: number;
+  textColor?: string;
+  text?: string;
+  size?: number;
+  fill?: string | boolean;
+  stroke?: string;
+  icon?: {
+    url: string;
+    [key: string]: any;
+  };
+}
+
 export class Marker extends Layer {
-  constructor(position, options) {
-    options = options || {};
+  public position: Point;
+  public rotation: number;
+  public yaw: number;
+  public text: string;
+  public size: number;
+  public textColor: string;
+  public fill: string | boolean;
+  public stroke: string;
+  public links: any[] = [];
+  public textObj?: fabric.Text;
+  public image?: fabric.Image;
+  public circle?: fabric.Circle;
+  public shape!: Group;
+  public connectors: Connector[] = [];
+  public style: any;
+  public icon?: {
+    url: string;
+    [key: string]: any;
+  };
+
+  private dragStart: fabric.IEvent | null = null;
+  private dragging: boolean = false;
+
+  constructor(position: PointLike, options: MarkerOptions = {}) {
     options.zIndex = options.zIndex || 100;
     options.keepOnZoom = options.keepOnZoom === undefined ? true : options.keepOnZoom;
     options.position = new Point(position);
@@ -17,16 +54,19 @@ export class Marker extends Layer {
 
     const vm = this;
 
-    this.text = this.text || '';
-    this.size = this.size || 10;
-    this.textColor = this.textColor || 'black';
-    this.fill = this.fill || 'white';
-    this.stroke = this.stroke || 'red';
+    this.position = new Point(position);
+    this.rotation = options.rotation || 0;
+    this.yaw = options.yaw || 0;
+    this.text = options.text || '';
+    this.size = options.size || 10;
+    this.textColor = options.textColor || 'black';
+    this.fill = options.fill || 'white';
+    this.stroke = options.stroke || 'red';
+    this.icon = options.icon;
 
     Object.assign(this.style, {
       left: this.position.x,
       top: this.position.y,
-      // selectionBackgroundColor: false,
       angle: this.rotation,
       yaw: this.yaw,
       clickable: this.clickable
@@ -42,14 +82,13 @@ export class Marker extends Layer {
     if (this.icon) {
       fabric.Image.fromURL(
         this.icon.url,
-        image => {
+        (image: fabric.Image) => {
           vm.image = image.scaleToWidth(this.size);
           this.init();
-          // vm.shape.removeWithUpdate();
         },
         {
           selectable: false,
-          evented: this.evented,
+          evented: this.clickable,
           clickable: this.clickable,
           opacity: this.opacity
         }
@@ -65,8 +104,8 @@ export class Marker extends Layer {
     }
   }
 
-  init() {
-    const objects = [];
+  init(): void {
+    const objects: fabric.Object[] = [];
     if (this.image) {
       objects.push(this.image);
     }
@@ -81,12 +120,13 @@ export class Marker extends Layer {
     this.addLinks();
     this.registerListeners();
 
-    process.nextTick(() => {
+    // Use setTimeout instead of process.nextTick for browser compatibility
+    setTimeout(() => {
       this.emit('ready');
-    });
+    }, 0);
   }
 
-  registerListeners() {
+  registerListeners(): void {
     const vm = this;
     this.shape.on('moving', () => {
       vm.onShapeDrag();
@@ -95,13 +135,13 @@ export class Marker extends Layer {
       vm.emit('rotating');
     });
 
-    this.shape.on('mousedown', e => {
+    this.shape.on('mousedown', (e: fabric.IEvent) => {
       vm.onShapeMouseDown(e);
     });
-    this.shape.on('mousemove', e => {
+    this.shape.on('mousemove', (e: fabric.IEvent) => {
       vm.onShapeMouseMove(e);
     });
-    this.shape.on('mouseup', e => {
+    this.shape.on('mouseup', (e: fabric.IEvent) => {
       vm.onShapeMouseUp(e);
     });
     this.shape.on('mouseover', () => {
@@ -112,7 +152,7 @@ export class Marker extends Layer {
     });
   }
 
-  setPosition(position) {
+  setPosition(position: PointLike): void {
     this.position = new Point(position);
     if (!this.shape) return;
 
@@ -128,7 +168,7 @@ export class Marker extends Layer {
     }
   }
 
-  setRotation(rotation) {
+  setRotation(rotation: number): void {
     this.rotation = rotation;
 
     if (!this.shape) return;
@@ -142,19 +182,19 @@ export class Marker extends Layer {
     }
   }
 
-  setOptions(options) {
+  setOptions(options: Partial<MarkerOptions>): void {
     if (!this.shape) return;
 
     Object.keys(options).forEach(key => {
       switch (key) {
         case 'textColor':
-          this.setTextColor(options[key]);
+          this.setTextColor(options.textColor as string);
           break;
         case 'stroke':
-          this.setStroke(options[key]);
+          this.setStroke(options.stroke as string);
           break;
         case 'fill':
-          this.setColor(options[key]);
+          this.setColor(options.fill as string);
           break;
 
         default:
@@ -166,49 +206,53 @@ export class Marker extends Layer {
     }
   }
 
-  setTextColor(color) {
+  setTextColor(color: string): void {
     if (this.text && this.textObj) {
-      this.textObj.setColor(color);
-      this.textObj.canvas.renderAll();
+      this.textObj.set('fill', color);
+      if (this.textObj.canvas) {
+        this.textObj.canvas.renderAll();
+      }
     }
   }
 
-  setText(text) {
+  setText(text: string): void {
     if (this.text && this.textObj) {
       this.textObj.set({ text });
-      this.textObj.canvas.renderAll();
+      if (this.textObj.canvas) {
+        this.textObj.canvas.renderAll();
+      }
     }
   }
 
-  setStroke(color) {
+  setStroke(color: string): void {
     if (this.circle) {
       this.circle.set('stroke', color);
     }
   }
 
-  setColor(color) {
+  setColor(color: string | boolean): void {
     if (this.circle) {
-      this.circle.setColor(color);
+      this.circle.set('fill', color);
     }
   }
 
-  setLinks(links) {
+  setLinks(links: any[]): void {
     this.links = links;
     this.addLinks();
   }
 
-  setSize(size) {
+  setSize(size: number): void {
     if (this.image) {
       this.image.scaleToWidth(size);
       if (this.image.canvas) {
         this.image.canvas.renderAll();
       }
     } else if (this.circle) {
-      this.circle.setRadius(size);
+      this.circle.set('radius', size);
     }
   }
 
-  addLinks() {
+  addLinks(): void {
     this.connectors = [];
     this.links.forEach(link => {
       const connector = new Connector(this, link);
@@ -218,18 +262,18 @@ export class Marker extends Layer {
     this.addConnectors();
   }
 
-  addConnectors() {
+  addConnectors(): void {
     const vm = this;
     this.connectors.forEach(connector => {
-      vm._map.addLayer(connector);
+      vm._map?.addLayer(connector);
     });
   }
 
-  onAdded() {
+  onAdded(): void {
     this.addConnectors();
   }
 
-  onShapeDrag() {
+  onShapeDrag(): void {
     const matrix = this.shape.calcTransformMatrix();
     const [, , , , x, y] = matrix;
     this.position = new Point(x, y);
@@ -237,22 +281,24 @@ export class Marker extends Layer {
     this.emit('moving');
   }
 
-  onShapeMouseDown(e) {
+  onShapeMouseDown(e: fabric.IEvent): void {
     this.dragStart = e;
   }
 
-  onShapeMouseMove(e) {
+  onShapeMouseMove(e: fabric.IEvent): void {
     if (this.dragStart) {
       this.emit('dragstart');
 
-      const a = new fabric.Point(e.pointer.x, e.pointer.y);
-      const b = new fabric.Point(this.dragStart.pointer.x, this.dragStart.pointer.y);
+      const a = new fabric.Point(e.pointer?.x || 0, e.pointer?.y || 0);
+      const b = new fabric.Point(
+        this.dragStart.pointer?.x || 0, 
+        this.dragStart.pointer?.y || 0
+      );
+      
       // if distance is far enough, we don't want to fire click event
       if (a.distanceFrom(b) > 3) {
         this.dragStart = null;
         this.dragging = true;
-      } else {
-        // this.dragging = false;
       }
     }
 
@@ -263,7 +309,7 @@ export class Marker extends Layer {
     }
   }
 
-  onShapeMouseUp() {
+  onShapeMouseUp(): void {
     if (!this.dragging) {
       this.emit('click');
     } else {
@@ -274,4 +320,6 @@ export class Marker extends Layer {
   }
 }
 
-export const marker = (position, options) => new Marker(position, options);
+export const marker = (position: PointLike, options?: MarkerOptions): Marker => new Marker(position, options);
+
+export default Marker;

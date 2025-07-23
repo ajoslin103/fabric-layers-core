@@ -1,4 +1,4 @@
-import { GridDefaults } from './Grid';
+import GridDefaults from './Grid';
 
 export interface AxisOptions extends Partial<GridDefaults> {
   width?: number;
@@ -59,7 +59,7 @@ class Axis {
     if (!values) return coords;
 
     for (let i = 0; i < values.length; i += 1) {
-      const t = this.getRatio(values[i]);
+      const t = this.getRatio(values[i] || 0);
       coords.push(t);
       coords.push(0);
       coords.push(t);
