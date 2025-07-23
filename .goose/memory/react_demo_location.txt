@@ -1,7 +1,0 @@
-# react demo reference
-React demo implementation is in fabric-layers-react package:
-- react-demo.html - Demo entry point
-- webpack.demo.js - Demo build config
-- tsconfig.demo.json - Demo TypeScript config
-Demo serves as reference implementation for React components
-

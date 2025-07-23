@@ -2,7 +2,7 @@
 
 An interactive coordinate-plane, grid, and layer management library for [fabric.js](https://fabricjs.com/) canvases.
 
-`fabric-layers` is based on the excellent original work of [ReactIndoorMapping](https://github.com/martinwairegi/ReactIndoorMapping) featured in this [blog post](https://blog.logrocket.com/build-indoor-maps-fabric-js-react/). The library has been refactored to be framework-agnostic and written in TypeScript while maintaining all the features of the original.
+`fabric-layers` is based on the excellent original work of [ReactIndoorMapping](https://github.com/martinwairegi/ReactIndoorMapping) featured in this [blog post](https://blog.logrocket.com/build-indoor-maps-fabric-js-react/). The library has been refactored to be framework-agnostic and upgraded to TypeScript while maintaining all the features of the original.
 
 ## 🚀 Running the Grid Demo
 
