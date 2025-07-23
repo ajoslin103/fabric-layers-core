@@ -1,29 +1,57 @@
 {
   "compilerOptions": {
+    // Language and Environment
     "target": "ES2020",
-    "module": "ESNext",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "moduleResolution": "node",
-    "declaration": true,
-    "declarationDir": "./dist/types",
-    "outDir": "./dist",
+    "module": "ESNext",
+    "jsx": "preserve",
+    
+    // Type Checking
     "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "allowJs": true,
-    "checkJs": false,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "strictBindCallApply": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "useUnknownInCatchVariables": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    
+    // Modules
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "resolveJsonModule": true,
+    
+    // Emit
+    "declaration": true,
+    "declarationDir": "./dist/types",
+    "outDir": "./dist",
+    "sourceMap": true,
+    "removeComments": false,
+    "importHelpers": true,
+    
+    // Interop Constraints
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "allowSyntheticDefaultImports": true,
+    
+    // Advanced
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist"
+    "dist",
+    "test"
   ]
 }

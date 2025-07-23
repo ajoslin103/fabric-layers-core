@@ -1,8 +1,8 @@
-# Fabric Layers v1.1.5
+# Fabric Layers v1.1.6
 
 An interactive coordinate-plane, grid, and layer management library for [fabric.js](https://fabricjs.com/) canvases.
 
-`fabric-layers` is based on the excellent original work of [ReactIndoorMapping](https://github.com/martinwairegi/ReactIndoorMapping) featured in this [blog post](https://blog.logrocket.com/build-indoor-maps-fabric-js-react/). The library has been refactored to be framework-agnostic while maintaining all the features of the original.
+`fabric-layers` is based on the excellent original work of [ReactIndoorMapping](https://github.com/martinwairegi/ReactIndoorMapping) featured in this [blog post](https://blog.logrocket.com/build-indoor-maps-fabric-js-react/). The library has been refactored to be framework-agnostic and written in TypeScript while maintaining all the features of the original.
 
 ## 🚀 Running the Grid Demo
 
@@ -31,6 +31,71 @@ To explore the grid functionality, follow these steps:
    - Make changes to the source code
    - Refresh the browser to see changes
 
+## 💻 TypeScript Usage
+
+### Basic Map Setup
+```typescript
+import { Map, Layer, Point } from 'fabric-layers-core';
+
+// Create a map instance
+const map = new Map(document.getElementById('canvas'), {
+  width: 800,
+  height: 600,
+  showGrid: true
+});
+
+// Create a layer with type safety
+const layer = new Layer({
+  draggable: true,
+  zIndex: 1,
+  class: 'custom-layer'
+});
+
+// Use Point class with type checking
+const position = new Point(100, 100);
+layer.position = position;
+
+// Add layer to map
+layer.addTo(map);
+```
+
+### Using Paint Tools
+```typescript
+import { PaintCanvas, Arrow } from 'fabric-layers-core';
+
+// Create a paint canvas with typed options
+const canvas = new PaintCanvas(document.getElementById('paint'), {
+  width: 800,
+  height: 600,
+  lineWidth: 2,
+  currentColor: '#ff0000'
+});
+
+// Create an arrow with proper types
+const arrow = new Arrow({ x: 0, y: 0 }, {
+  stroke: '#000000',
+  strokeWidth: 2
+});
+
+canvas.canvas.add(arrow);
+```
+
+### Type-Safe Event Handling
+```typescript
+import { Map } from 'fabric-layers-core';
+
+const map = new Map(document.getElementById('canvas'));
+
+// Event handlers with proper typing
+map.on('mode-changed', (mode: string) => {
+  console.log(`Mode changed to: ${mode}`);
+});
+
+map.on('update', () => {
+  const bounds = map.getBounds(); // Returns typed Point[]
+  console.log('Map updated', bounds);
+});
+```
 
 ---
 
@@ -52,7 +117,7 @@ Base (EventEmitter2)
 │   ├── Connector
 │   └── Tooltip
 ├── Paint System
-│   ├── Canvas
+│   ├── PaintCanvas
 │   ├── Arrow
 │   ├── ArrowHead
 │   └── PaintManager
@@ -65,11 +130,24 @@ Base (EventEmitter2)
 
 PRs and issues are welcome!
 1. Fork & `git clone`
-2. `npm install`
-3. `npm run dev` – watch/build
-4. Add tests in `test/` and run `npm test`
+2. `yarn install`
+3. `yarn build:watch` – watch/build with TypeScript
+4. Add tests in `test/` and run `yarn test`
+5. Run `yarn type-check` to verify types
 
 Please follow the [Conventional Commits](https://www.conventionalcommits.org/) spec; CI will lint commit messages.
+
+## 📝 Type Documentation
+
+Complete TypeScript definitions are available in the published package. Key interfaces and types:
+
+- `MapOptions` - Configuration options for Map class
+- `LayerOptions` - Configuration for Layer instances
+- `Point` & `PointLike` - Coordinate handling
+- `GridOptions` - Grid system configuration
+- `PaintCanvasOptions` - Paint system options
+
+The library uses strict TypeScript configuration for maximum type safety.
 
 ---
 

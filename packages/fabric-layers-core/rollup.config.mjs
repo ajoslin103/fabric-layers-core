@@ -1,90 +1,66 @@
-// Rollup configuration for fabric-layers library (ESM, Node 22+ compatible)
-import { babel } from '@rollup/plugin-babel';
+import { defineConfig } from 'rollup';
 import commonjs from '@rollup/plugin-commonjs';
+import resolve from '@rollup/plugin-node-resolve';
 import json from '@rollup/plugin-json';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import terser from '@rollup/plugin-terser';
-import fs from 'node:fs';
-const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'));
+import typescript from '@rollup/plugin-typescript';
+import pkg from './package.json' assert { type: "json" };
 
-const banner = `/* @preserve\n * fabric-layers ${pkg.version}, a fabric.js coordinate-plane (grid) & layers library. ${pkg.homepage}\n * (c) ${new Date().getFullYear()} ${pkg.author || 'fabric-layers contributors'}\n * License: ${pkg.license}\n */\n`;
-
-const outputConfig = (format) => ({
-  globals: {
-    'fabric-pure-browser': 'fabric'
-  },
-  sourcemap: true,
-  banner,
-  format
-});
-
-const babelConfig = {
-  babelHelpers: 'runtime',
-  exclude: 'node_modules/**',
-  plugins: ['@babel/plugin-transform-runtime'],
-  presets: [
-    ['@babel/preset-env', {
-      targets: '> 0.25%, not dead',
-      modules: false
-    }]
-  ]
-};
-
-const commonPlugins = [
-  nodeResolve({
-    browser: true,
-    preferBuiltins: true
-  }),
-  commonjs(),
-  json(),
-  babel(babelConfig)
-];
-
-export default [
-  // UMD build for browsers
+export default defineConfig([
+  // UMD build
   {
-    input: 'src/index.js',
+    input: 'src/index.ts',
+    output: {
+      name: 'FabricLayers',
+      file: pkg.unpkg,
+      format: 'umd',
+      sourcemap: true,
+      globals: {
+        'fabric-pure-browser': 'fabric',
+        'eventemitter2': 'EventEmitter2'
+      }
+    },
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.json',
+        compilerOptions: {
+          declaration: false,
+        }
+      }),
+      resolve(),
+      commonjs(),
+      json(),
+      terser()
+    ],
+    external: ['fabric-pure-browser', 'eventemitter2']
+  },
+  // CommonJS and ES Module builds
+  {
+    input: 'src/index.ts',
     output: [
       {
-        file: pkg.unpkg.replace('.js', '.min.js'),
-        format: 'umd',
-        name: 'FabricLayers',
-        ...outputConfig('umd'),
-        sourcemap: false,
-        plugins: [terser()]
+        file: pkg.main,
+        format: 'cjs',
+        sourcemap: true,
+        exports: 'named'
       },
       {
-        file: pkg.unpkg,
-        format: 'umd',
-        name: 'FabricLayers',
-        ...outputConfig('umd')
+        file: pkg.module,
+        format: 'es',
+        sourcemap: true
       }
     ],
-    plugins: commonPlugins,
-    external: [/@babel\/runtime/]
-  },
-
-  // ESM build for modern bundlers
-  {
-    input: 'src/index.js',
-    output: {
-      file: pkg.module,
-      format: 'es',
-      ...outputConfig('es')
-    },
-    plugins: commonPlugins,
-    external: [/@babel\/runtime/]
-  },
-
-  // CommonJS build for Node.js/npm
-  {
-    input: 'src/index.js',
-    output: {
-      file: pkg.main,
-      format: 'cjs',
-      ...outputConfig('cjs')
-    },
-    plugins: commonPlugins,
-    external: [/@babel\/runtime/]
+    plugins: [
+      typescript({
+        tsconfig: './tsconfig.json',
+        compilerOptions: {
+          sourceMap: true,
+        }
+      }),
+      resolve(),
+      commonjs(),
+      json()
+    ],
+    external: ['fabric-pure-browser', 'eventemitter2']
   }
-];
+]);
