@@ -1,8 +1,0 @@
-# workflow publish
-When asked to publish:
-1. Run version bump
-2. Run builds
-3. Stop at npm publish
-4. Ask for OTP code
-5. Complete publish with provided code
-

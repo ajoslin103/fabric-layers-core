@@ -1,7 +1,0 @@
-# node version-management monorepo
-Node.js Version Management:
-- Single .nvmrc file at monorepo root controls Node version for all projects
-- Current version: v22.16.0
-- All packages and apps must use this version
-- No individual .nvmrc files in subprojects
-

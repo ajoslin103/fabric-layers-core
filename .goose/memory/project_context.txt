@@ -1,9 +1,0 @@
-# development vue approach context
-Development Approach:
-- While the final goal involves React components (fabric-layers-react), development proceeds in smaller, focused steps
-- Current focus: Creating a Vue.js implementation that consumes fabric-layers-core
-- This Vue implementation is separate from and does not use any React code
-- The grid-demo.html from fabric-layers-core serves as reference for core library functionality
-- Multiple parallel implementations/approaches are valid within the monorepo
-- Each implementation should be treated as its own project with its own requirements
-
