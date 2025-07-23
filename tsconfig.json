@@ -6,9 +6,17 @@
     "moduleResolution": "node",
     "module": "ESNext",
     "jsx": "preserve",
-
-    "typeRoots": ["./types", "./node_modules/@types"],
     
+    // Modules
+    "baseUrl": ".",
+    "resolveJsonModule": true,
+    
+    "typeRoots": ["./node_modules/@types", "./src"],
+    "paths": {
+      "lib/*": ["./src/lib/*"],
+      "*": ["node_modules/*"]
+    },
+
     // Type Checking
     "strict": true,
     "noImplicitAny": true,
@@ -23,13 +31,6 @@
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
-    
-    // Modules
-    "baseUrl": ".",
-    "paths": {
-      "*": ["node_modules/*"]
-    },
-    "resolveJsonModule": true,
     
     // Emit
     "declaration": true,

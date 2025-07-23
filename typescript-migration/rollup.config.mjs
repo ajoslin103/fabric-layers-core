@@ -12,9 +12,6 @@ const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url
 const banner = `/* @preserve\n * fabric-layers ${pkg.version}, a fabric.js coordinate-plane (grid) & layers library. ${pkg.homepage}\n * (c) ${new Date().getFullYear()} ${pkg.author || 'fabric-layers contributors'}\n * License: ${pkg.license}\n */\n`;
 
 const outputConfig = (format) => ({
-  globals: {
-    'fabric-pure-browser': 'fabric'
-  },
   sourcemap: true,
   banner,
   format

@@ -2,7 +2,7 @@ import alpha from '../lib/color-alpha';
 import Base from '../core/Base';
 import {
   clamp, almost, len, parseUnit, toPx, isObj
-} from '../lib/mumath/index';
+} from 'lib/mumath/index';
 import gridStyle from './gridStyle';
 import Axis from './Axis';
 import { Point, PointLike } from '../geometry/Point';
