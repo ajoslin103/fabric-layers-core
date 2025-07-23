@@ -1,17 +1,17 @@
-import { Group as FabricGroup, Object as FabricObject, IGroupOptions } from 'fabric';
+import { fabric } from 'fabric';
 import { Point } from '../geometry/Point';
 
-export interface GroupOptions extends IGroupOptions {
+export interface GroupOptions {
   [key: string]: any; // Allow additional properties
 }
 
-export class Group extends FabricGroup {
+export class Group extends fabric.Group {
   /**
    * Create a new Group
    * @param objects - The fabric objects to group
    * @param options - Configuration options
    */
-  constructor(objects?: FabricObject[], options: GroupOptions = {}) {
+  constructor(objects?: fabric.Object[], options: GroupOptions = {}) {
     super(objects || [], options);
   }
 
@@ -21,8 +21,13 @@ export class Group extends FabricGroup {
    */
   getBounds(): Point[] {
     const coords: Point[] = [];
-    coords.push(new Point(this.left - this.width / 2.0, this.top - this.height / 2.0));
-    coords.push(new Point(this.left + this.width / 2.0, this.top + this.height / 2.0));
+    const left = this.left ?? 0;
+    const top = this.top ?? 0;
+    const width = this.width ?? 0;
+    const height = this.height ?? 0;
+    
+    coords.push(new Point(left - width / 2.0, top - height / 2.0));
+    coords.push(new Point(left + width / 2.0, top + height / 2.0));
     return coords;
   }
 }
@@ -33,7 +38,7 @@ export class Group extends FabricGroup {
  * @param options - Configuration options
  * @returns A new Group instance
  */
-export const group = (objects?: FabricObject[], options: GroupOptions = {}): Group => 
+export const group = (objects?: fabric.Object[], options: GroupOptions = {}): Group => 
   new Group(objects, options);
 
 export default Group;
