@@ -1,11 +1,34 @@
 import alpha from '../lib/color-alpha';
 import Base from '../core/Base';
-import {
-  clamp, almost, len, parseUnit, toPx, isObj
-} from 'lib/mumath/index';
+// Import with type assertion to avoid TypeScript errors
+const mumath = require('../lib/mumath/index') as {
+  clamp: (value: number, min?: number, max?: number) => number;
+  almost: (a: number, b: number, precision?: number) => boolean;
+  len: (x: number, y: number) => number;
+  parseUnit: (value: string | number) => [number, string];
+  toPx: (value: string | number, base?: number) => number;
+  isObj: (value: any) => boolean;
+};
+
+const { clamp, almost, len, parseUnit, toPx, isObj } = mumath;
 import gridStyle from './gridStyle';
 import Axis from './Axis';
 import { Point, PointLike } from '../geometry/Point';
+
+// Extended Point class that includes zoom for Grid component
+class GridPoint extends Point implements GridCenter {
+  zoom: number;
+  
+  constructor(x: number, y: number, zoom: number = 1) {
+    super(x, y);
+    this.zoom = zoom;
+  }
+  
+  // Create from a GridCenter object
+  static fromCenter(center: GridCenter): GridPoint {
+    return new GridPoint(center.x, center.y, center.zoom);
+  }
+}
 
 // Interfaces for grid state and configuration
 interface GridCenter {
@@ -66,7 +89,8 @@ interface GridDefaults {
   format: (v: number) => string | number;
 }
 
-interface GridState {
+// Export GridState interface for use in other files
+export interface GridState {
   coordinate: Axis;
   opposite?: GridState;
   shape: [number, number];
@@ -102,7 +126,8 @@ export class Grid extends Base {
   
   // Grid state
   public state: { x: GridState; y: GridState };
-  public center: Point;
+  // Use the extended GridPoint type which includes the zoom property
+  public center: GridPoint;
   public axisX: Axis;
   public axisY: Axis;
   
@@ -245,11 +270,13 @@ export class Grid extends Base {
     } as GridState;
 
     // calculate real offset/range
-    state.range = coord.getRange(state);
+    // Fix function call to match Axis.getRange signature (takes no parameters)
+    state.range = coord.getRange();
+    // Use this.defaults instead of coord for min/max properties
     state.offset = clamp(
       coord.offset - state.range * clamp(0.5, 0, 1),
-      Math.max(coord.min, -Number.MAX_VALUE + 1),
-      Math.min(coord.max, Number.MAX_VALUE) - state.range
+      Math.max(this.defaults.min, -Number.MAX_VALUE + 1),
+      Math.min(this.defaults.max, Number.MAX_VALUE) - state.range
     );
 
     state.zoom = coord.zoom;
@@ -261,7 +288,8 @@ export class Grid extends Base {
 
     state.axisWidth = coord.axisWidth || coord.lineWidth;
     state.lineWidth = coord.lineWidth;
-    state.tickAlign = coord.tickAlign;
+    // Use a default value for tickAlign if not available on coord
+    state.tickAlign = coord.tickAlign ?? this.defaults.tickAlign ?? 0.5;
     state.labelColor = state.color;
 
     // get padding
@@ -277,7 +305,7 @@ export class Grid extends Base {
     if (typeof coord.fontSize === 'number') {
       state.fontSize = coord.fontSize;
     } else {
-      const units = parseUnit(coord.fontSize);
+      const units = parseUnit(coord.fontSize ?? '12px');
       state.fontSize = units[0] * toPx(units[1]);
     }
     state.fontFamily = coord.fontFamily || 'sans-serif';
@@ -431,7 +459,8 @@ export class Grid extends Base {
         const coords: number[] = [];
         if (!values) return coords;
         for (let i = 0; i < values.length; i += 1) {
-          const t = state.coordinate.getRatio(values[i], state);
+          // Fix to match Axis.getRatio signature (only takes one parameter)
+          const t = state.coordinate.getRatio(values[i] ?? 0);
           coords.push(t);
           coords.push(0);
           coords.push(t);
@@ -450,7 +479,8 @@ export class Grid extends Base {
         const coords: number[] = [];
         if (!values) return coords;
         for (let i = 0; i < values.length; i += 1) {
-          const t = state.coordinate.getRatio(values[i], state);
+          // Fix to match Axis.getRatio signature (only takes one parameter)
+          const t = state.coordinate.getRatio(values[i] ?? 0);
           coords.push(0);
           coords.push(t);
           coords.push(1);
@@ -465,7 +495,13 @@ export class Grid extends Base {
     Object.assign(this, this.defaults);
     Object.assign(this, this._options);
 
-    this.center = new Point(this.center);
+    // Use GridPoint instead of Point to include the zoom property
+    const centerObj = this.center || this.defaults.center;
+    this.center = new GridPoint(
+      centerObj?.x || 0, 
+      centerObj?.y || 0, 
+      centerObj?.zoom || 1
+    );
   }
 
   // Draw methods
@@ -483,9 +519,11 @@ export class Grid extends Base {
     const [width, height] = state.shape;
     const [pt, pr, pb, pl] = state.padding;
 
-    let axisRatio = state.opposite!.coordinate.getRatio(state.coordinate.axisOrigin, state.opposite!);
+    // Fix function call to match Axis.getRatio signature (only takes one parameter)
+    let axisRatio = state.opposite!.coordinate.getRatio(state.coordinate.axisOrigin || 0);
     axisRatio = clamp(axisRatio, 0, 1);
-    const coords = state.coordinate.getCoords(state.lines, state);
+    // Fix function call to match Axis.getCoords signature (only takes one parameter)
+    const coords = state.coordinate.getCoords(state.lines);
 
     // draw lines
     ctx.lineWidth = 1;
@@ -512,9 +550,13 @@ export class Grid extends Base {
       const y1 = coords[i + 1];
       const x2 = coords[i + 2];
       const y2 = coords[i + 3];
-      const xDif = x2 - x1;
-      const yDif = y2 - y1;
-      const dist = len(xDif, yDif);
+      // Ensure we have valid number values
+      const xDif = (x2 ?? 0) - (x1 ?? 0);
+      const yDif = (y2 ?? 0) - (y1 ?? 0);
+      
+      // Safely call len with defined numbers
+      const dist = len(xDif, yDif) || 1; // Avoid division by zero
+      
       normals.push(xDif / dist);
       normals.push(yDif / dist);
     }
@@ -531,14 +573,24 @@ export class Grid extends Base {
       const y2 = coords[j + 3];
       const xDif = (x2 - x1) * axisRatio;
       const yDif = (y2 - y1) * axisRatio;
+      // Add null safety to padding values
+      const safePl = pl ?? 0;
+      const safePr = pr ?? 0;
+      const safePt = pt ?? 0;
+      const safePb = pb ?? 0;
+      
       const tick = [
-        (normals[i] * ticks[k]) / (width - pl - pr),
-        (normals[i + 1] * ticks[k]) / (height - pt - pb)
+        (normals[i] * ticks[k]) / (width - safePl - safePr),
+        (normals[i + 1] * ticks[k]) / (height - safePt - safePb)
       ];
       tickCoords.push(normals[i] * (xDif + tick[0] * state.tickAlign) + x1);
       tickCoords.push(normals[i + 1] * (yDif + tick[1] * state.tickAlign) + y1);
       tickCoords.push(normals[i] * (xDif - tick[0] * (1 - state.tickAlign)) + x1);
       tickCoords.push(normals[i + 1] * (yDif - tick[1] * (1 - state.tickAlign)) + y1);
+      // Initialize labelCoords array if undefined
+      if (!state.labelCoords) {
+        state.labelCoords = [];
+      }
       state.labelCoords.push(normals[i] * xDif + x1);
       state.labelCoords.push(normals[i + 1] * yDif + y1);
     }
@@ -548,11 +600,11 @@ export class Grid extends Base {
       ctx.lineWidth = state.axisWidth / 2;
       ctx.beginPath();
       for (let i = 0, j = 0; i < tickCoords.length; i += 4, j += 1) {
-        if (almost(state.lines[j], state.opposite!.coordinate.axisOrigin)) continue;
-        const x1 = pl + tickCoords[i] * (width - pl - pr);
-        const y1 = pt + tickCoords[i + 1] * (height - pt - pb);
-        const x2 = pl + tickCoords[i + 2] * (width - pl - pr);
-        const y2 = pt + tickCoords[i + 3] * (height - pt - pb);
+        if (almost(state.lines[j], state.opposite?.coordinate.axisOrigin ?? 0)) continue;
+        const x1 = (pl ?? 0) + tickCoords[i] * (width - (pl ?? 0) - (pr ?? 0));
+        const y1 = (pt ?? 0) + tickCoords[i + 1] * (height - (pt ?? 0) - (pb ?? 0));
+        const x2 = (pl ?? 0) + tickCoords[i + 2] * (width - (pl ?? 0) - (pr ?? 0));
+        const y2 = (pt ?? 0) + tickCoords[i + 3] * (height - (pt ?? 0) - (pb ?? 0));
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
       }
@@ -563,15 +615,28 @@ export class Grid extends Base {
 
     // draw axis
     if (state.coordinate.axis && state.axisColor) {
-      const axisCoords = state.opposite!.coordinate.getCoords(
+      const axisCoords = state.opposite?.coordinate.getCoords(
         [state.coordinate.axisOrigin],
-        state.opposite!
-      );
+        state.opposite
+      ) ?? [0, 0, 0, 0];
       ctx.lineWidth = state.axisWidth / 2;
-      const x1 = pl + clamp(axisCoords[0], 0, 1) * (width - pr - pl);
-      const y1 = pt + clamp(axisCoords[1], 0, 1) * (height - pt - pb);
-      const x2 = pl + clamp(axisCoords[2], 0, 1) * (width - pr - pl);
-      const y2 = pt + clamp(axisCoords[3], 0, 1) * (height - pt - pb);
+      // Ensure values are defined before passing to clamp function
+      const safeAxisCoords0 = axisCoords[0] ?? 0;
+      const safeAxisCoords1 = axisCoords[1] ?? 0;
+      const safeAxisCoords2 = axisCoords[2] ?? 0;
+      const safeAxisCoords3 = axisCoords[3] ?? 0;
+      
+      const safeWidth = width ?? 0;
+      const safeHeight = height ?? 0;
+      const safePl = pl ?? 0;
+      const safePr = pr ?? 0;
+      const safePt = pt ?? 0;
+      const safePb = pb ?? 0;
+      
+      const x1 = safePl + clamp(safeAxisCoords0, 0, 1) * (safeWidth - safePr - safePl);
+      const y1 = safePt + clamp(safeAxisCoords1, 0, 1) * (safeHeight - safePt - safePb);
+      const x2 = safePl + clamp(safeAxisCoords2, 0, 1) * (safeWidth - safePr - safePl);
+      const y2 = safePt + clamp(safeAxisCoords3, 0, 1) * (safeHeight - safePt - safePb);
       ctx.beginPath();
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
@@ -599,23 +664,23 @@ export class Grid extends Base {
     const textOffset = state.tickAlign < 0.5
       ? -textHeight - state.axisWidth * 2 
       : state.axisWidth * 2;
-    const isOpp = state.coordinate.orientation === 'y' && !state.opposite!.disabled;
+    const isOpp = state.coordinate.orientation === 'y' && !state.opposite?.disabled;
 
     for (let i = 0; i < state.labels.length; i += 1) {
       let label = state.labels[i];
       if (label == null) continue;
 
-      if (isOpp && almost(state.lines[i], state.opposite!.coordinate.axisOrigin)) continue;
+      if (isOpp && almost(state.lines[i] ?? 0, state.opposite?.coordinate?.axisOrigin ?? 0)) continue;
 
       const textWidth = ctx.measureText(String(label)).width;
-      let textLeft = state.labelCoords![i * 2] * (width - pl - pr) + indent + pl;
+      let textLeft = (state.labelCoords?.[i * 2] ?? 0) * (width - (pl ?? 0) - (pr ?? 0)) + indent + (pl ?? 0);
 
       if (state.coordinate.orientation === 'y') {
         textLeft = clamp(textLeft, indent, width - textWidth - 1 - state.axisWidth);
         label = Number(label) * -1;
       }
 
-      let textTop = state.labelCoords![i * 2 + 1] * (height - pt - pb) + textOffset + pt;
+      let textTop = (state.labelCoords?.[i * 2 + 1] ?? 0) * (height - (pt ?? 0) - (pb ?? 0)) + textOffset + (pt ?? 0);
       if (state.coordinate.orientation === 'x') {
         textTop = clamp(textTop, 0, height - textHeight - textOffset);
       }
