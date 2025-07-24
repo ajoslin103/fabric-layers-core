@@ -1,5 +1,35 @@
-import { Canvas, Object as FabricObject } from 'fabric';
+import { fabric } from 'fabric';
 import panzoom from '../lib/panzoom';
+import { EventEmitter2 } from 'eventemitter2';
+
+// Define interfaces for fabric objects with custom properties
+interface MapSettings {
+  width?: number;
+  height?: number;
+  zoomEnabled?: boolean;
+  originPin?: boolean;
+  [key: string]: any;
+}
+
+// Extend fabric.Object with custom properties
+interface ExtendedFabricObject extends fabric.Object {
+  zIndex?: number;
+  keepOnZoom?: boolean;
+  class?: string;
+  parent?: fabric.Object;
+}
+
+// Extend fabric.Group with custom properties
+interface ExtendedFabricGroup extends fabric.Group {
+  getObjects(): ExtendedFabricObject[];
+  removeWithUpdate(obj: fabric.Object): fabric.Group;
+  angle?: number;
+}
+
+// Extend fabric event type
+interface ExtendedFabricEvent extends fabric.IEvent {
+  target?: ExtendedFabricObject;
+}
 import { clamp } from '../lib/mumath/index';
 
 import Base from '../core/Base';
@@ -21,16 +51,27 @@ export interface PanZoomEvent {
   isRight: boolean;
 }
 
-export interface MapOptions extends MapConfig {
+export interface MapOptions {
   width?: number;
   height?: number;
   autostart?: boolean;
   pinMargin?: number;
   zoomOverMouse?: boolean;
+  zoom?: number;
+  minZoom?: number;
+  maxZoom?: number;
+  gridEnabled?: boolean;
+  zoomEnabled?: boolean;
+  selectEnabled?: boolean;
+  mode?: Mode;
+  showGrid?: boolean;
+  originPin?: OriginPinType;
+  enablePan?: boolean;
+  center?: Point;
 }
 
 export interface Layer {
-  shape: FabricObject;
+  shape: fabric.Object;
   class?: string;
   emit?: (event: string, ...args: any[]) => void;
 }
@@ -47,10 +88,25 @@ export interface Layer {
 //   }
 // }
 
+// Extend fabric.Canvas to include wrapper element property
+interface ExtendedFabricCanvas extends fabric.Canvas {
+  wrapperEl?: HTMLElement;
+}
+
+// Declare properties and methods that Map will have via mixins
+declare class MapBase {
+  emit(event: string, ...args: any[]): boolean;
+  on(event: string, listener: (...args: any[]) => void): this;
+  clear(): void;
+  setMode(mode: Mode): void;
+  _options: MapOptions;
+}
+
 export class Map extends mix(Base).with(ModesMixin) {
   public container: HTMLElement;
-  public canvas: Canvas;
+  public canvas: ExtendedFabricCanvas;
   public context: CanvasRenderingContext2D;
+  public _options: MapOptions;
   public gridCanvas?: HTMLCanvasElement;
   public grid?: Grid;
   public measurement: Measurement;
@@ -106,7 +162,7 @@ export class Map extends mix(Base).with(ModesMixin) {
     canvas.width = options?.width || this.container.clientWidth;
     canvas.height = options?.height || this.container.clientHeight;
 
-    this.canvas = new Canvas(canvas, {
+    this.canvas = new fabric.Canvas(canvas, {
       preserveObjectStacking: true,
       renderOnAddRemove: true
     });
@@ -178,7 +234,9 @@ export class Map extends mix(Base).with(ModesMixin) {
   }
 
   addGrid(): void {
-    this.gridCanvas = this.cloneCanvas();
+    this.gridCanvas = document.createElement('canvas');
+    this.gridCanvas.className = 'grid-canvas';
+    this.container.appendChild(this.gridCanvas);
     this.gridCanvas.setAttribute('id', 'fabric-layers-grid-canvas');
     this.grid = new Grid(this.gridCanvas, this);
     
@@ -199,8 +257,8 @@ export class Map extends mix(Base).with(ModesMixin) {
     }
   }
 
-  cloneCanvas(canvas?: Canvas): HTMLCanvasElement {
-    canvas = canvas || this.canvas;
+  cloneCanvas(): HTMLCanvasElement {
+    const canvas = this.canvas;
     const clone = document.createElement('canvas');
     clone.width = canvas.width;
     clone.height = canvas.height;

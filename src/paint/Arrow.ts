@@ -1,21 +1,21 @@
-import { Group, Object as FabricObject, Point as FabricPoint, Polyline, IGroupOptions } from 'fabric';
+import { fabric } from 'fabric';
 import ArrowHead from './ArrowHead';
 import { PointLike } from '../geometry/Point';
 
-export interface ArrowOptions extends IGroupOptions {
+export interface ArrowOptions extends fabric.IGroupOptions {
   strokeWidth?: number;
   stroke?: string;
   class?: string;
   [key: string]: any; // Additional fabric.js properties
 }
 
-export class Arrow extends Group {
+export class Arrow extends fabric.Group {
   protected pointArray: PointLike[];
   protected options: ArrowOptions;
   protected head?: ArrowHead;
-  protected polyline?: Polyline;
+  protected polyline?: fabric.Polyline;
   protected lastAngle?: number;
-  protected strokeWidth: number;
+  public strokeWidth: number;
 
   /**
    * Create a new Arrow
@@ -46,29 +46,30 @@ export class Arrow extends Group {
   protected draw(): void {
     // Remove existing shapes if they exist
     if (this.head) {
-      this.remove(this.head);
+      // Use fabric's removeWithUpdate instead of remove
+      this.removeWithUpdate(this.head as any);
     }
 
     if (this.polyline) {
-      this.remove(this.polyline);
+      this.removeWithUpdate(this.polyline as any);
     }
 
     // Create arrow line
-    this.polyline = new Polyline(
+    this.polyline = new fabric.Polyline(
       this.pointArray,
       {
         ...this.options,
         strokeLineJoin: 'round',
-        fill: false
+        fill: 'transparent'
       }
     );
 
-    this.addWithUpdate(this.polyline);
+    this.addWithUpdate(this.polyline as any);
 
     // Create arrow head
     const lastPoints = this.getLastPoints();
-    const p1 = new FabricPoint(lastPoints[0], lastPoints[1]);
-    const p2 = new FabricPoint(lastPoints[2], lastPoints[3]);
+    const p1 = new fabric.Point(lastPoints[0], lastPoints[1]);
+    const p2 = new fabric.Point(lastPoints[2], lastPoints[3]);
     const distance = p1.distanceFrom(p2);
     console.log(`distance = ${distance}`);
 
@@ -84,7 +85,7 @@ export class Arrow extends Group {
     if (distance > 10) {
       this.lastAngle = this.head.angle;
     }
-    this.addWithUpdate(this.head);
+    this.addWithUpdate(this.head as any);
   }
 
   /**
@@ -103,6 +104,7 @@ export class Arrow extends Group {
   public addTempPoint(point: PointLike): void {
     const len = this.pointArray.length;
     const lastPoint = this.pointArray[len - 1];
+    if (!lastPoint) return;
     lastPoint.x = point.x;
     lastPoint.y = point.y;
     this.draw();
@@ -114,8 +116,10 @@ export class Arrow extends Group {
    */
   protected getLastPoints(): [number, number, number, number] {
     const len = this.pointArray.length;
+    if (len < 2) return [0, 0, 0, 0];
     const point1 = this.pointArray[len - 2];
     const point2 = this.pointArray[len - 1];
+    if (!point1 || !point2) return [0, 0, 0, 0];
     return [point1.x, point1.y, point2.x, point2.y];
   }
 

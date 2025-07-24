@@ -1,4 +1,4 @@
-import { Rect } from '../vector';
+import { Rect } from '../vector/Rect';
 import { Layer, LayerOptions } from '../Layer';
 
 export type Bounds = number[][];
@@ -64,6 +64,9 @@ export class MarkerGroup extends Layer {
   }
 
   draw(): void {
+    if (!this.bounds) return;
+    if (!this.bounds[0] || !this.bounds[1]) return;
+
     const width = this.bounds[1][0] - this.bounds[0][0];
     const height = this.bounds[1][1] - this.bounds[0][1];
     
@@ -77,6 +80,9 @@ export class MarkerGroup extends Layer {
     if (this.shape) {
       this.shape.set(this.coords);
     } else {
+      if (!this.style) {
+        this.style = {}; // Initialize with defaults if undefined
+      }
       Object.assign(this.style, this.coords);
       this.shape = new Rect(this.style);
     }
