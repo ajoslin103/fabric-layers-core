@@ -1,4 +1,4 @@
-import { IEvent } from 'fabric';
+import { fabric } from 'fabric';
 import { Map } from '../map/Map';
 import Measurer from './Measurer';
 import { PointLike } from '../geometry/Point';
@@ -18,7 +18,7 @@ export class Measurement {
    * Handle mouse movement events for measurement
    * @param e - The fabric.js mouse event
    */
-  onMouseMove(e: IEvent): void {
+  onMouseMove(e: fabric.IEvent): void {
     if (!e.absolutePointer) return;
 
     const point: PointLike = {
@@ -36,7 +36,7 @@ export class Measurement {
    * Handle click events for measurement
    * @param e - The fabric.js mouse event
    */
-  onClick(e: IEvent): void {
+  onClick(e: fabric.IEvent): void {
     if (!e.absolutePointer) return;
 
     const point: PointLike = {

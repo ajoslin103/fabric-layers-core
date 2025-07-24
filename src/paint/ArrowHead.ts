@@ -1,4 +1,5 @@
-import { Triangle } from 'fabric';
+import { fabric } from 'fabric';
+const { Triangle } = fabric;
 
 export interface ArrowHeadOptions {
   headLength?: number;
