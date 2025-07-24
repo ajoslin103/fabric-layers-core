@@ -199,16 +199,46 @@ export class Grid extends Base {
     let state = this.state.x;
     let [width, height] = state.shape;
     let [pt, pr, pb, pl] = state.padding;
+    // Update state on the opposite axis before calling getCoords
+    if ('setState' in state.opposite!.coordinate) {
+      (state.opposite!.coordinate as any).setState(state.opposite!);
+    }
+    // Ensure axisOrigin is defined before passing it to getCoords
+    const axisOrigin = state.coordinate.axisOrigin ?? 0;
     let axisCoords = state.opposite!.coordinate.getCoords(
-      [state.coordinate.axisOrigin],
-      state.opposite!
+      [axisOrigin]
     );
-    const y = pt + axisCoords[1] * (height - pt - pb);
-    state = this.state.y;
-    [width, height] = state.shape;
-    [pt, pr, pb, pl] = state.padding;
-    axisCoords = state.opposite!.coordinate.getCoords([state.coordinate.axisOrigin], state.opposite!);
-    const x = pl + axisCoords[0] * (width - pr - pl);
+    // Ensure array element exists before using it
+    const axisCoord1 = axisCoords[1] ?? 0;
+    const y = pt + axisCoord1 * (height - pt - pb);
+    // Ensure state.y is not undefined before assignment
+    if (this.state.y) {
+      state = this.state.y;
+      // Ensure shape and padding are also defined
+      if (state.shape) {
+        [width, height] = state.shape;
+      } else {
+        // Default values if shape is undefined
+        width = this.canvas?.width ?? 0;
+        height = this.canvas?.height ?? 0;
+      }
+      if (state.padding) {
+        [pt, pr, pb, pl] = state.padding;
+      } else {
+        // Default padding values if undefined
+        pt = pr = pb = pl = 0;
+      }
+    }
+    // Update state before calling getCoords
+    if ('setState' in state.opposite!.coordinate) {
+      (state.opposite!.coordinate as any).setState(state.opposite!);
+    }
+    // Ensure axisOrigin is defined before passing it to getCoords
+    const axisOrigin2 = state.coordinate.axisOrigin ?? 0;
+    axisCoords = state.opposite!.coordinate.getCoords([axisOrigin2]);
+    // Ensure array element exists before using it
+    const axisCoord0 = axisCoords[0] ?? 0;
+    const x = pl + axisCoord0 * (width - pr - pl);
     return { x, y };
   }
 
@@ -263,11 +293,27 @@ export class Grid extends Base {
 
   // get state object with calculated params, ready for rendering
   calcCoordinate(coord: Axis, shape: [number, number]): GridState {
+    // Initialize GridState with all required properties
     const state: GridState = {
       coordinate: coord,
       shape,
-      grid: this
-    } as GridState;
+      grid: this,
+      range: 0,          // Will be set below
+      offset: 0,         // Will be set below
+      zoom: coord.zoom,
+      axisColor: '',     // Will be set below
+      axisWidth: 0,      // Will be set below
+      lineWidth: 0,      // Will be set below
+      tickAlign: 0,      // Will be set below
+      labelColor: '',    // Will be set below
+      padding: [0, 0, 0, 0], // Will be set below
+      fontSize: 0,       // Will be set below
+      fontFamily: '',    // Will be set below
+      lines: [],         // Will be set below
+      lineColors: [],    // Will be set below
+      ticks: [],         // Will be set below
+      labels: []         // Will be set below
+    };
 
     // If it's our custom axis with setState method, call it to provide state
     if ('setState' in coord) {
@@ -283,18 +329,17 @@ export class Grid extends Base {
       Math.min(this.defaults.max ?? Number.MAX_VALUE, Number.MAX_VALUE) - state.range
     );
 
-    state.zoom = coord.zoom;
-
     // calc style
     state.axisColor = typeof coord.axisColor === 'number'
       ? alpha(coord.color, coord.axisColor)
       : coord.axisColor || coord.color;
 
-    state.axisWidth = coord.axisWidth || coord.lineWidth;
-    state.lineWidth = coord.lineWidth;
+    state.axisWidth = coord.axisWidth ?? coord.lineWidth ?? 1;
+    state.lineWidth = coord.lineWidth ?? 1;
     // Use a default value for tickAlign if not available on coord
-    state.tickAlign = coord.tickAlign ?? this.defaults.tickAlign ?? 0.5;
-    state.labelColor = state.color;
+    state.tickAlign = (coord as any).tickAlign ?? this.defaults.tickAlign ?? 0.5;
+    // Use coordinate color or default color for label color
+    state.labelColor = coord.color ?? this.defaults.color ?? '#000000';
 
     // get padding
     if (typeof coord.padding === 'number') {
@@ -316,10 +361,18 @@ export class Grid extends Base {
 
     // get lines stops, including joined list of values
     let lines: number[];
-    if (coord.lines instanceof Function) {
-      lines = coord.lines(state);
+    if (coord.lines === false) {
+      lines = [];
+    } else if (typeof coord.lines === 'function') {
+      lines = (coord.lines as Function)(state);
     } else {
-      lines = (coord.lines === true ? [] : coord.lines as number[]) || [];
+      // Handle the case where coord.lines is a boolean or undefined
+      if (coord.lines === true || coord.lines === undefined) {
+        lines = [];
+      } else {
+        // Handle the case where it's a number array
+        lines = Array.isArray(coord.lines) ? coord.lines : [];
+      }
     }
     state.lines = lines;
 
@@ -349,29 +402,39 @@ export class Grid extends Base {
 
     // calc labels
     let labels: (string | number | null)[];
-    if (coord.labels === true) labels = state.lines;
-    else if (coord.labels instanceof Function) {
-      labels = coord.labels(state);
+    if (coord.labels === true) {
+      // Convert number lines to string/number array
+      labels = state.lines.map(line => line); // This preserves the numbers
+    } else if (typeof coord.labels === 'function') {
+      labels = (coord.labels as Function)(state);
     } else if (Array.isArray(coord.labels)) {
-      labels = coord.labels;
-    } else if (isObj(coord.labels)) {
-      labels = coord.labels;
+      labels = coord.labels as (string | number | null)[];
+    } else if (coord.labels && typeof coord.labels === 'object' && !Array.isArray(coord.labels)) {
+      // Convert object to array of labels using type assertion
+      labels = Object.values(coord.labels as Record<string, string | number | null>);
+    } else if (coord.labels === false) {
+      labels = Array(state.lines.length).fill(null);
     } else {
+      // Default case for undefined or other unexpected values
       labels = Array(state.lines.length).fill(null);
     }
     state.labels = labels;
 
     // convert hashmap ticks/labels to lines + colors
-    if (isObj(ticks)) {
+    // Use type guards to check if ticks is an object (not array, not null, and not a primitive)
+    if (ticks && typeof ticks === 'object' && !Array.isArray(ticks)) {
       state.ticks = Array(lines.length).fill(0);
     }
-    if (isObj(labels)) {
+    // Use type guards to check if labels is an object (not array, not null, and not a primitive)
+    if (labels && typeof labels === 'object' && !Array.isArray(labels)) {
       state.labels = Array(state.lines.length).fill(null);
     }
-    if (isObj(ticks)) {
+    // Handle object ticks (using type guard instead of isObj)
+    if (ticks && typeof ticks === 'object' && !Array.isArray(ticks)) {
       Object.keys(ticks).forEach((value, tick) => {
         state.ticks.push(tick);
-        state.lines.push(parseFloat(value));
+        // Ensure value is a string before parsing to float
+        state.lines.push(parseFloat(String(value)));
         state.lineColors.push(null);
         state.labels.push(null);
       });
@@ -380,7 +443,8 @@ export class Grid extends Base {
     if (isObj(labels)) {
       Object.keys(labels).forEach((label, value) => {
         state.labels.push(label);
-        state.lines.push(parseFloat(value));
+        // Ensure value is a string before parsing to float
+        state.lines.push(parseFloat(String(value)));
         state.lineColors.push(null);
         state.ticks.push(null);
       });
@@ -658,9 +722,14 @@ export class Grid extends Base {
 
     // draw axis
     if (state.coordinate.axis && state.axisColor) {
+      // Update state on axis before calling getCoords
+      if (state.opposite && 'setState' in state.opposite.coordinate) {
+        (state.opposite.coordinate as any).setState(state.opposite);
+      }
+      // Get coordinates for axis origin
+      const axisOrigin = state.coordinate.axisOrigin ?? 0;
       const axisCoords = state.opposite?.coordinate.getCoords(
-        [state.coordinate.axisOrigin],
-        state.opposite
+        [axisOrigin]
       ) ?? [0, 0, 0, 0];
       ctx.lineWidth = state.axisWidth / 2;
       // Ensure values are defined before passing to clamp function
@@ -707,7 +776,8 @@ export class Grid extends Base {
     const textOffset = state.tickAlign < 0.5
       ? -textHeight - state.axisWidth * 2 
       : state.axisWidth * 2;
-    const isOpp = state.coordinate.orientation === 'y' && !state.opposite?.disabled;
+    // Check if opposite axis should be considered as disabled by checking if its coordinate exists
+    const isOpp = state.coordinate.orientation === 'y' && state.opposite?.coordinate != null;
 
     for (let i = 0; i < state.labels.length; i += 1) {
       let label = state.labels[i];
