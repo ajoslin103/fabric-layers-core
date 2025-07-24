@@ -12,7 +12,8 @@ export class Rect extends fabric.Rect {
     const opts: RectOptions = options || {};
     opts.strokeWidth = opts.strokeWidth || 1;
     opts.class = 'rect';
-    super(points, opts);
+    const [ [top, left], [width, height] ] = points;
+    super({ ...opts, top, left, width, height });
     this._strokeWidth = opts.strokeWidth || 1;
   }
 

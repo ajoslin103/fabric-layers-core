@@ -144,13 +144,19 @@ export class Grid extends Base {
   public pinMargin!: number;
   public zoomOverMouse!: boolean;
 
-  constructor(canvas: HTMLCanvasElement, opts?: GridOptions) {
-    super(opts);
+  // Constructor accepts either GridOptions or a Map instance
+  constructor(canvas: HTMLCanvasElement, optsOrMap?: GridOptions | any) {
+    // If second parameter is a plain object (GridOptions) or undefined, pass it to super
+    // Otherwise, assume it's a Map instance and pass an empty object to super
+    const isGridOptions = optsOrMap === undefined || 
+      (optsOrMap && typeof optsOrMap === 'object' && !('canvas' in optsOrMap));
+    
+    super(isGridOptions ? optsOrMap : {});
     this.canvas = canvas;
     this.context = this.canvas.getContext('2d')!;
     this.state = {} as { x: GridState; y: GridState };
     this.setDefaults();
-    this.update(opts);
+    this.update(isGridOptions ? optsOrMap : {});
   }
 
   setOriginPin(corner: string): void {
@@ -346,8 +352,11 @@ export class Grid extends Base {
       state.padding = Array(4).fill(coord.padding);
     } else if (coord.padding instanceof Function) {
       state.padding = coord.padding(state);
+    } else if (Array.isArray(coord.padding)) {
+      state.padding = coord.padding;
     } else {
-      state.padding = coord.padding as number[];
+      // Default padding if none specified
+      state.padding = [0, 0, 0, 0];
     }
 
     // calc font
@@ -357,7 +366,7 @@ export class Grid extends Base {
       const units = parseUnit(coord.fontSize ?? '12px');
       state.fontSize = units[0] * toPx(units[1]);
     }
-    state.fontFamily = coord.fontFamily || 'sans-serif';
+    state.fontFamily = coord.fontFamily ?? this.defaults.fontFamily ?? 'sans-serif';
 
     // get lines stops, including joined list of values
     let lines: number[];
@@ -383,8 +392,8 @@ export class Grid extends Base {
       state.lineColors = coord.lineColor;
     } else {
       let color = typeof coord.lineColor === 'number' 
-        ? alpha(coord.color, coord.lineColor)
-        : coord.lineColor === false || coord.lineColor == null ? null : coord.color;
+        ? alpha(coord.color ?? '#000000', coord.lineColor)
+        : coord.lineColor === false || coord.lineColor == null ? null : (coord.color ?? '#000000');
       state.lineColors = Array(lines.length).fill(color);
     }
 
