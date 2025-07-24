@@ -1,0 +1,21 @@
+/**
+ * Precision round
+ *
+ * @param {number} value
+ * @param {number} step Minimal discrete to round
+ *
+ * @return {number}
+ *
+ * @example
+ * toPrecision(213.34, 1) == 213
+ * toPrecision(213.34, .1) == 213.3
+ * toPrecision(213.34, 10) == 210
+ */
+import precision from './precision';
+
+export default function round(value: number, step?: number): number {
+  if (step === 0) return value;
+  if (!step) return Math.round(value);
+  value = Math.round(value / step) * step;
+  return parseFloat(value.toFixed(precision(step)));
+}
