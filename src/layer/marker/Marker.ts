@@ -89,16 +89,16 @@ export class Marker extends Layer {
         {
           selectable: false,
           evented: this.clickable,
-          clickable: this.clickable,
-          opacity: this.opacity
-        }
+          opacity: this.opacity,
+          clickable: this.clickable
+        } as fabric.IImageOptions & { clickable: boolean }
       );
     } else {
       this.circle = new fabric.Circle({
         radius: this.size,
         strokeWidth: 2,
         stroke: this.stroke,
-        fill: this.fill
+        fill: this.fill as string
       });
       this.init();
     }
@@ -141,8 +141,8 @@ export class Marker extends Layer {
     this.shape.on('mousemove', (e: fabric.IEvent) => {
       vm.onShapeMouseMove(e);
     });
-    this.shape.on('mouseup', (e: fabric.IEvent) => {
-      vm.onShapeMouseUp(e);
+    this.shape.on('mouseup', (_e: fabric.IEvent) => {
+      vm.onShapeMouseUp();
     });
     this.shape.on('mouseover', () => {
       vm.emit('mouseover', vm);
@@ -232,7 +232,7 @@ export class Marker extends Layer {
 
   setColor(color: string | boolean): void {
     if (this.circle) {
-      this.circle.set('fill', color);
+      this.circle.set('fill', color as string);
     }
   }
 
