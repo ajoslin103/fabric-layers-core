@@ -3,6 +3,7 @@ import { Layer, LayerOptions } from '../Layer';
 import { Group } from '../Group';
 import { Point, PointLike } from '../../geometry/Point';
 import { Connector } from '../Connector';
+import { Layer as MapLayer } from '../../map/Map';
 
 export interface MarkerOptions extends LayerOptions {
   rotation?: number;
@@ -265,7 +266,8 @@ export class Marker extends Layer {
   addConnectors(): void {
     const vm = this;
     this.connectors.forEach(connector => {
-      vm._map?.addLayer(connector);
+      // Use type assertion to handle type compatibility with Map.Layer interface
+      vm._map?.addLayer(connector as unknown as MapLayer);
     });
   }
 

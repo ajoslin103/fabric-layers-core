@@ -4,6 +4,8 @@ An interactive coordinate-plane, grid, and layer management library for [fabric.
 
 `fabric-layers-core` is based on the excellent original work "IndoorJS" of [Mudin Ibrahim](https://github.com/mudin)
 
+We're using the browser version of fabric.js, not the node version -- [choice is triggered by the suffix '-browser' on the package name.](https://github.com/fabricjs/fabric.js/issues/5735)
+
 ## 🚀 Running the Grid Demo
 
 To explore the grid functionality, follow these steps:
