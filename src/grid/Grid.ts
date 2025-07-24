@@ -127,22 +127,22 @@ export class Grid extends Base {
   // Grid state
   public state: { x: GridState; y: GridState };
   // Use the extended GridPoint type which includes the zoom property
-  public center: GridPoint;
-  public axisX: Axis;
-  public axisY: Axis;
+  public center!: GridPoint;
+  public axisX!: Axis;
+  public axisY!: Axis;
   
   // Configuration
-  public pixelRatio: number;
-  public autostart: boolean;
-  public interactions: boolean;
-  public defaults: GridDefaults;
+  public pixelRatio!: number;
+  public autostart!: boolean;
+  public interactions!: boolean;
+  public defaults!: GridDefaults;
   
   // Pin settings
-  public isPinned: boolean = false;
-  public pinnedCorner: string = 'NONE';
-  public pinnedAbsolute: PointLike = { x: 0, y: 0 };
-  public pinMargin: number = 0;
-  public zoomOverMouse: boolean = true;
+  public isPinned!: boolean;
+  public pinnedCorner!: string;
+  public pinnedAbsolute!: PointLike;
+  public pinMargin!: number;
+  public zoomOverMouse!: boolean;
 
   constructor(canvas: HTMLCanvasElement, opts?: GridOptions) {
     super(opts);
@@ -331,8 +331,8 @@ export class Grid extends Base {
 
     // calc style
     state.axisColor = typeof coord.axisColor === 'number'
-      ? alpha(coord.color, coord.axisColor)
-      : coord.axisColor || coord.color;
+      ? alpha(coord.color ?? '#000000', coord.axisColor)
+      : coord.axisColor || coord.color || '#000000'; // Default to black if both values are undefined
 
     state.axisWidth = coord.axisWidth ?? coord.lineWidth ?? 1;
     state.lineWidth = coord.lineWidth ?? 1;
