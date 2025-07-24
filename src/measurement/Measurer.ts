@@ -1,4 +1,4 @@
-import { Canvas, Circle, Line, Text, IEvent } from 'fabric';
+import { fabric } from 'fabric';
 import { Point, PointLike } from '../geometry/Point';
 import { Map } from '../map/Map';
 
@@ -31,17 +31,17 @@ export class Measurer {
   protected options: MeasurerOptions;
   public start: Point;
   public end: Point;
-  public canvas: Canvas;
+  public canvas: fabric.Canvas;
   public completed: boolean = false;
 
   // Fabric objects
-  protected objects?: (Line | Text | Circle)[];
-  protected line?: Line;
-  protected text?: Text;
-  protected circle1?: Circle;
-  protected circle2?: Circle;
-  protected circle11?: Circle;
-  protected circle22?: Circle;
+  protected objects?: (fabric.Line | fabric.Text | fabric.Circle)[];
+  protected line?: fabric.Line;
+  protected text?: fabric.Text;
+  protected circle1?: fabric.Circle;
+  protected circle2?: fabric.Circle;
+  protected circle11?: fabric.Circle;
+  protected circle22?: fabric.Circle;
 
   constructor(options: MeasurerOptions) {
     // Set default options
@@ -87,7 +87,7 @@ export class Measurer {
     const center = start.add(end).multiply(0.5);
 
     // Create line
-    this.line = new Line([start.x, start.y, end.x, end.y], {
+    this.line = new fabric.Line([start.x, start.y, end.x, end.y], {
       stroke: this.options.stroke || '#3e82ff',
       hasControls: false,
       hasBorders: false,
@@ -115,24 +115,24 @@ export class Measurer {
     };
 
     // Create circles
-    this.circle1 = new Circle(lineEndOptions2);
-    this.circle2 = new Circle({
+    this.circle1 = new fabric.Circle(lineEndOptions2);
+    this.circle2 = new fabric.Circle({
       ...lineEndOptions2,
       left: end.x,
       top: end.y,
     });
 
-    this.circle11 = new Circle(lineEndOptions);
-    this.circle22 = new Circle({
+    this.circle11 = new fabric.Circle(lineEndOptions);
+    this.circle22 = new fabric.Circle({
       ...lineEndOptions,
       left: end.x,
       top: end.y,
     });
 
     // Create text label
-    let text = Math.round(start.distanceFrom(end));
-    text = `${text / 100} m`;
-    this.text = new Text(text, {
+    let distance = Math.round(start.distanceFrom(end));
+    let formattedText = `${distance / 100} m`;
+    this.text = new fabric.Text(formattedText, {
       textBackgroundColor: 'black',
       fill: 'white',
       left: center.x,
@@ -182,13 +182,13 @@ export class Measurer {
    * Register event listeners for interactive measurement
    */
   protected registerListeners(): void {
-    this.circle2?.on('moving', (e: IEvent) => {
+    this.circle2?.on('moving', (e: fabric.IEvent) => {
       if (e.pointer) {
         this.setEnd(e.pointer);
       }
     });
 
-    this.circle1?.on('moving', (e: IEvent) => {
+    this.circle1?.on('moving', (e: fabric.IEvent) => {
       if (e.pointer) {
         this.setStart(e.pointer);
       }

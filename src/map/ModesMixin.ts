@@ -1,4 +1,4 @@
-import { Canvas } from 'fabric';
+import { fabric } from 'fabric';
 import { Mode } from '../core/Constants';
 
 // Type for the constructor of the class being mixed into
@@ -6,7 +6,7 @@ type Constructor<T = {}> = new (...args: any[]) => T;
 
 // Interface that defines what properties/methods the base class must have
 interface ModesMixinBase {
-  canvas: Canvas;
+  canvas: fabric.Canvas;
   mode: Mode;
 }
 
