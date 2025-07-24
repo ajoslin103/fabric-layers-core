@@ -269,14 +269,18 @@ export class Grid extends Base {
       grid: this
     } as GridState;
 
+    // If it's our custom axis with setState method, call it to provide state
+    if ('setState' in coord) {
+      (coord as any).setState(state);
+    }
+
     // calculate real offset/range
-    // Fix function call to match Axis.getRange signature (takes no parameters)
     state.range = coord.getRange();
     // Use this.defaults instead of coord for min/max properties
     state.offset = clamp(
       coord.offset - state.range * clamp(0.5, 0, 1),
-      Math.max(this.defaults.min, -Number.MAX_VALUE + 1),
-      Math.min(this.defaults.max, Number.MAX_VALUE) - state.range
+      Math.max(this.defaults.min ?? -Number.MAX_VALUE + 1, -Number.MAX_VALUE + 1),
+      Math.min(this.defaults.max ?? Number.MAX_VALUE, Number.MAX_VALUE) - state.range
     );
 
     state.zoom = coord.zoom;
@@ -449,48 +453,87 @@ export class Grid extends Base {
       this._options
     );
 
-    this.axisX = new Axis('x', this.defaults);
-    this.axisY = new Axis('y', this.defaults);
+    // Create custom GridAxis classes to handle the different method signatures
+    class GridXAxis extends Axis {
+      private state?: GridState;
 
-    this.axisX = Object.assign({}, this.defaults, {
-      orientation: 'x',
-      offset: this.center.x,
-      getCoords: (values: number[], state: GridState) => {
+      constructor(defaults: any, center: GridPoint) {
+        super('x', { ...defaults, offset: center.x });
+      }
+
+      setState(state: GridState): void {
+        this.state = state;
+      }
+
+      // Override with grid-specific implementation
+      getCoords(values?: number[]): number[] {
         const coords: number[] = [];
-        if (!values) return coords;
+        if (!values || !this.state) return coords;
+        
         for (let i = 0; i < values.length; i += 1) {
-          // Fix to match Axis.getRatio signature (only takes one parameter)
-          const t = state.coordinate.getRatio(values[i] ?? 0);
+          // Use the base class getRatio with our single parameter
+          const t = this.getRatio(values[i] ?? 0);
           coords.push(t);
           coords.push(0);
           coords.push(t);
           coords.push(1);
         }
         return coords;
-      },
-      getRange: (state: GridState) => state.shape[0] * state.coordinate.zoom,
-      getRatio: (value: number, state: GridState) => (value - state.offset) / state.range
-    });
+      }
 
-    this.axisY = Object.assign({}, this.defaults, {
-      orientation: 'y',
-      offset: this.center.y,
-      getCoords: (values: number[], state: GridState) => {
+      // Override with grid-specific implementation
+      getRange(): number {
+        return this.state ? this.state.shape[0] * this.zoom : super.getRange();
+      }
+
+      // Override with grid-specific implementation
+      getRatio(value: number): number {
+        if (!this.state) return super.getRatio(value);
+        return (value - this.state.offset) / this.state.range;
+      }
+    }
+
+    class GridYAxis extends Axis {
+      private state?: GridState;
+
+      constructor(defaults: any, center: GridPoint) {
+        super('y', { ...defaults, offset: center.y });
+      }
+
+      setState(state: GridState): void {
+        this.state = state;
+      }
+
+      // Override with grid-specific implementation
+      getCoords(values?: number[]): number[] {
         const coords: number[] = [];
-        if (!values) return coords;
+        if (!values || !this.state) return coords;
+        
         for (let i = 0; i < values.length; i += 1) {
-          // Fix to match Axis.getRatio signature (only takes one parameter)
-          const t = state.coordinate.getRatio(values[i] ?? 0);
+          // Use the base class getRatio with our single parameter
+          const t = this.getRatio(values[i] ?? 0);
           coords.push(0);
           coords.push(t);
           coords.push(1);
           coords.push(t);
         }
         return coords;
-      },
-      getRange: (state: GridState) => state.shape[1] * state.coordinate.zoom,
-      getRatio: (value: number, state: GridState) => 1 - (value - state.offset) / state.range
-    });
+      }
+
+      // Override with grid-specific implementation
+      getRange(): number {
+        return this.state ? this.state.shape[1] * this.zoom : super.getRange();
+      }
+
+      // Override with grid-specific implementation
+      getRatio(value: number): number {
+        if (!this.state) return super.getRatio(value);
+        return 1 - (value - this.state.offset) / this.state.range;
+      }
+    }
+
+    this.axisX = new GridXAxis(this.defaults, this.center);
+    this.axisY = new GridYAxis(this.defaults, this.center);
 
     Object.assign(this, this.defaults);
     Object.assign(this, this._options);
