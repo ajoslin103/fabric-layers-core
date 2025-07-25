@@ -1,4 +1,4 @@
-import { Object as FabricObject } from 'fabric';
+import fabric from 'fabric';
 import Base from '../core/Base';
 import { Map } from '../map/Map';
 
@@ -56,7 +56,7 @@ export class Layer extends Base {
   public style: LayerStyle;
 
   // Optional properties
-  public shape?: FabricObject;
+  public shape?: fabric.Object;
   protected _map?: Map;
 
   constructor(options?: LayerOptions) {

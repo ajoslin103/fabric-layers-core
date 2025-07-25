@@ -64,7 +64,7 @@ export class PaintCanvas extends Base {
     this.canvas = new fabric.Canvas(canvas, {
       freeDrawingCursor: 'none'
       // Other options can be set here
-    });
+    })
     
     // Set up the drawing brush after canvas is created
     const pencilBrush = new fabric.PencilBrush(this.canvas);
