@@ -17,7 +17,8 @@ export interface PaintCanvasOptions {
   fontFamily?: string;
 }
 
-export interface MouseEventInfo extends fabric.IEvent {
+// Define an interface for mouse events in our application
+export interface MouseEventInfo {
   e: MouseEvent;
   target?: fabric.Object;
 }
@@ -61,12 +62,15 @@ export class PaintCanvas extends Base {
 
     // Create fabric canvas
     this.canvas = new fabric.Canvas(canvas, {
-      freeDrawingCursor: 'none',
-      freeDrawingBrush: new fabric.PencilBrush(this.canvas),
-      freeDrawingBrush: new fabric.PencilBrush(this.canvas),
-      freeDrawingBrush.color: this.currentColor,
-      freeDrawingBrush.width: this.lineWidth
+      freeDrawingCursor: 'none'
+      // Other options can be set here
     });
+    
+    // Set up the drawing brush after canvas is created
+    const pencilBrush = new fabric.PencilBrush(this.canvas);
+    pencilBrush.color = this.currentColor;
+    pencilBrush.width = this.lineWidth;
+    this.canvas.freeDrawingBrush = pencilBrush;
 
     this.setLineWidth(this.lineWidth);
     this.addCursor();
