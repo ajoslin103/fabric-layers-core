@@ -1,4 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
+import fabric from 'fabric';
 import {
   createCanvas,
   clearCanvas,
@@ -9,19 +10,50 @@ import {
 } from './paint-utils';
 
 /**
+ * Configuration options for the PaintManager
+ */
+export interface PaintManagerOptions {
+  /** Initial canvas width */
+  width?: number;
+  /** Initial canvas height */
+  height?: number;
+  /** DOM element to append canvas to */
+  container?: HTMLElement | null;
+  /** Additional fabric canvas options */
+  canvasOptions?: fabric.ICanvasOptions;
+}
+
+/**
  * PaintManager class
  * Provides a comprehensive system for managing canvas painting operations
  */
 class PaintManager extends EventEmitter2 {
+  /** Canvas width */
+  public width: number;
+  /** Canvas height */
+  public height: number;
+  /** Container element */
+  public container: HTMLElement | null;
+  /** Current brush color */
+  public brushColor: string;
+  /** Current brush width in pixels */
+  public brushWidth: number;
+  /** Current painting mode */
+  public mode: string;
+  /** Canvas history for undo/redo */
+  protected history: any[];
+  /** Current position in history */
+  protected historyIndex: number;
+  /** Maximum number of history steps to keep */
+  protected maxHistorySteps: number;
+  /** Fabric canvas instance */
+  public canvas: fabric.Canvas;
+
   /**
    * Creates a new PaintManager instance
-   * @param {Object} options - Configuration options
-   * @param {number} options.width - Initial canvas width
-   * @param {number} options.height - Initial canvas height
-   * @param {HTMLElement} options.container - DOM element to append canvas to
-   * @param {Object} options.canvasOptions - Additional fabric canvas options
+   * @param options - Configuration options
    */
-  constructor(options = {}) {
+  constructor(options: PaintManagerOptions = {}) {
     super();
 
     const {
@@ -57,7 +89,7 @@ class PaintManager extends EventEmitter2 {
    * Sets up event handlers for the canvas
    * @private
    */
-  _setupEventHandlers() {
+  private _setupEventHandlers(): void {
     this.canvas.on('path:created', () => {
       this._saveState();
       this.emit('path:created');
@@ -73,7 +105,7 @@ class PaintManager extends EventEmitter2 {
    * Saves the current canvas state to history
    * @private
    */
-  _saveState() {
+  private _saveState(): void {
     // Remove any states after current index if we've gone back in history
     if (this.historyIndex < this.history.length - 1) {
       this.history = this.history.slice(0, this.historyIndex + 1);
@@ -93,9 +125,9 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Sets the painting mode
-   * @param {string} mode - Mode to set ('pencil', 'line', 'rect', 'circle', 'eraser')
+   * @param mode - Mode to set ('pencil', 'line', 'rect', 'circle', 'eraser')
    */
-  setMode(mode) {
+  public setMode(mode: string): void {
     this.mode = mode;
 
     // Disable any active selection
@@ -124,9 +156,9 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Sets the brush color
-   * @param {string} color - Color in any valid CSS format
+   * @param color - Color in any valid CSS format
    */
-  setBrushColor(color) {
+  public setBrushColor(color: string): void {
     this.brushColor = color;
     if (this.canvas.freeDrawingBrush) {
       this.canvas.freeDrawingBrush.color = color;
@@ -136,9 +168,9 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Sets the brush width
-   * @param {number} width - Width in pixels
+   * @param width - Width in pixels
    */
-  setBrushWidth(width) {
+  public setBrushWidth(width: number): void {
     this.brushWidth = width;
     if (this.canvas.freeDrawingBrush) {
       this.canvas.freeDrawingBrush.width = width;
@@ -148,11 +180,11 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Resizes the canvas
-   * @param {number} width - New width in pixels
-   * @param {number} height - New height in pixels
-   * @param {boolean} scaleContent - Whether to scale content with canvas
+   * @param width - New width in pixels
+   * @param height - New height in pixels
+   * @param scaleContent - Whether to scale content with canvas
    */
-  resize(width, height, scaleContent = false) {
+  public resize(width: number, height: number, scaleContent: boolean = false): void {
     this.width = width;
     this.height = height;
     resizeCanvas(this.canvas, width, height, scaleContent);
@@ -163,7 +195,7 @@ class PaintManager extends EventEmitter2 {
   /**
    * Clears the canvas
    */
-  clear() {
+  public clear(): void {
     clearCanvas(this.canvas);
     this._saveState();
     this.emit('canvas:cleared');
@@ -171,9 +203,9 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Undoes the last action
-   * @returns {boolean} - Whether undo was successful
+   * @returns Whether undo was successful
    */
-  undo() {
+  public undo(): boolean {
     if (this.historyIndex > 0) {
       this.historyIndex--;
       this.canvas.loadFromJSON(this.history[this.historyIndex], () => {
@@ -187,9 +219,9 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Redoes the last undone action
-   * @returns {boolean} - Whether redo was successful
+   * @returns Whether redo was successful
    */
-  redo() {
+  public redo(): boolean {
     if (this.historyIndex < this.history.length - 1) {
       this.historyIndex++;
       this.canvas.loadFromJSON(this.history[this.historyIndex], () => {
@@ -203,18 +235,18 @@ class PaintManager extends EventEmitter2 {
 
   /**
    * Exports the canvas as a data URL
-   * @param {string} format - Image format (png, jpeg, webp)
-   * @param {number} quality - Image quality for jpeg and webp (0-1)
-   * @returns {string} - Data URL of the canvas
+   * @param format - Image format (png, jpeg, webp)
+   * @param quality - Image quality for jpeg and webp (0-1)
+   * @returns Data URL of the canvas
    */
-  exportToDataURL(format = 'png', quality = 0.8) {
+  public exportToDataURL(format: string = 'png', quality: number = 0.8): string {
     return canvasToDataURL(this.canvas, format, quality);
   }
 
   /**
    * Destroys the PaintManager instance and cleans up resources
    */
-  destroy() {
+  public destroy(): void {
     if (this.canvas) {
       this.canvas.dispose();
       if (this.container && this.canvas.wrapperEl) {
