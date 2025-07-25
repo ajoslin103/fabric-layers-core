@@ -4,10 +4,9 @@ import {
   createCanvas,
   clearCanvas,
   resizeCanvas,
-  canvasToDataURL,
-  createImageFromURL,
-  applyFilter
+  canvasToDataURL
 } from './paint-utils';
+import { ExtendedFabricCanvas } from '../types/fabric-extensions';
 
 /**
  * Configuration options for the PaintManager
@@ -47,7 +46,7 @@ class PaintManager extends EventEmitter2 {
   /** Maximum number of history steps to keep */
   protected maxHistorySteps: number;
   /** Fabric canvas instance */
-  public canvas: fabric.Canvas;
+  public canvas: ExtendedFabricCanvas;
 
   /**
    * Creates a new PaintManager instance

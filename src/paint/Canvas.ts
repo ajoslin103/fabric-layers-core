@@ -1,6 +1,7 @@
 import { fabric } from 'fabric';
 import Base from '../core/Base';
 import Arrow from './Arrow';
+import { ExtendedFabricCanvas } from '../types/fabric-extensions';
 
 export enum PaintMode {
   SELECT = 'select',
@@ -15,17 +16,6 @@ export interface PaintCanvasOptions {
   lineWidth?: number;
   currentColor?: string;
   fontFamily?: string;
-}
-
-// Define an interface for mouse events in our application
-// export interface MouseEventInfo {
-//   e: fabric.IEvent<MouseEvent>;
-//   target?: fabric.Object;
-// }
-
-// Extend fabric.Canvas to include wrapper element property
-interface ExtendedFabricCanvas extends fabric.Canvas {
-  wrapperEl?: HTMLElement;
 }
 
 export class PaintCanvas extends Base {
