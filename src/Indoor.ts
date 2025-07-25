@@ -1,8 +1,10 @@
 import fabric from 'fabric';
 
-import { version, name } from '../package.json';
+// Allow importing JSON files by using TypeScript type assertions
+import pkg from '../package.json';
+const { version, name } = pkg as { version: string; name: string };
 
-console.log('fabricJS ', fabric.version || window.fabric.version);
+console.log('fabricJS ', (fabric.version || (window as any).fabric.version));
 console.log(`${name} v${version}`);
 
 export { version };
