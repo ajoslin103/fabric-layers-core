@@ -1,4 +1,4 @@
-import fabric from 'fabric';
+import { fabric } from 'fabric';
 import Base from '../core/Base';
 import { Map } from '../map/Map';
 
@@ -56,7 +56,7 @@ export class Layer extends Base {
   public style: LayerStyle;
 
   // Optional properties
-  public shape?: fabric.Object;
+  public shape: fabric.Object;
   protected _map?: Map;
 
   constructor(options?: LayerOptions) {
@@ -94,6 +94,12 @@ export class Layer extends Base {
       hoverCursor: this.hoverCursor,
       moveCursor: this.moveCursor
     };
+
+    this.shape = new fabric.Rect({
+      width: 0,
+      height: 0,
+      ...this.style
+    });
   }
 
   /**
@@ -104,7 +110,7 @@ export class Layer extends Base {
     if (!this.shape) return;
 
     Object.keys(options).forEach(key => {
-      this.shape!.set(key, options[key]);
+      this.shape!.set(key as keyof fabric.Object, options[key as keyof fabric.Object]);
     });
 
     if (this.shape.canvas) {

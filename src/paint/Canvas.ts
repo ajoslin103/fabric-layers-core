@@ -1,4 +1,4 @@
-import fabric from 'fabric';
+import { fabric } from 'fabric';
 import Base from '../core/Base';
 import Arrow from './Arrow';
 
@@ -18,15 +18,20 @@ export interface PaintCanvasOptions {
 }
 
 // Define an interface for mouse events in our application
-export interface MouseEventInfo {
-  e: MouseEvent;
-  target?: fabric.Object;
+// export interface MouseEventInfo {
+//   e: fabric.IEvent<MouseEvent>;
+//   target?: fabric.Object;
+// }
+
+// Extend fabric.Canvas to include wrapper element property
+interface ExtendedFabricCanvas extends fabric.Canvas {
+  wrapperEl?: HTMLElement;
 }
 
 export class PaintCanvas extends Base {
   // DOM Elements
   public container: HTMLElement;
-  public canvas: fabric.Canvas;
+  public canvas: ExtendedFabricCanvas;
   protected cursorCanvas?: HTMLCanvasElement;
   protected cursor?: fabric.StaticCanvas;
   protected mousecursor?: fabric.Circle | fabric.Path | null;
@@ -135,9 +140,9 @@ export class PaintCanvas extends Base {
 
   // Event Handlers
   protected addListeners(): void {
-    this.canvas.on('mouse:move', (evt: MouseEventInfo) => {
+    this.canvas.on('mouse:move', (evt: fabric.IEvent<MouseEvent>) => {
       const mouse = this.canvas.getPointer(evt.e);
-      if (this.mousecursor) {
+      if (this.mousecursor && this.mousecursor instanceof fabric.Circle) {
         this.mousecursor
           .set({
             top: mouse.y,
@@ -156,7 +161,7 @@ export class PaintCanvas extends Base {
     });
 
     this.canvas.on('mouse:out', () => {
-      if (!this.mousecursor) return;
+      if (!this.mousecursor || !(this.mousecursor instanceof fabric.Circle)) return;
       this.mousecursor
         .set({
           left: -1000,
@@ -167,7 +172,7 @@ export class PaintCanvas extends Base {
       this.cursor?.renderAll();
     });
 
-    this.canvas.on('mouse:up', (event: MouseEventInfo) => {
+    this.canvas.on('mouse:up', (event: fabric.IEvent<MouseEvent>) => {
       if (this.mouseDown) {
         this.canvas.fire('mouse:click', event);
       }
@@ -182,13 +187,13 @@ export class PaintCanvas extends Base {
       this.mouseDown = true;
     });
 
-    this.canvas.on('mouse:click', (event: MouseEventInfo) => {
+    this.canvas.on('mouse:click', (event: fabric.IEvent<Event>) => {
       console.log('mouse click', event);
       const mouse = this.canvas.getPointer(event.e);
       if (event.target) return;
 
       if (this.isTextMode()) {
-        const text = new IText('Text', {
+        const text = new fabric.IText('Text', {
           left: mouse.x,
           top: mouse.y,
           width: 100,
@@ -198,10 +203,9 @@ export class PaintCanvas extends Base {
           fill: this.currentColor,
           stroke: this.currentColor
         });
-        this.canvas
-          .add(text)
-          .setActiveObject(text)
-          .renderAll();
+        this.canvas.add(text);
+        this.canvas.setActiveObject(text);
+        this.canvas.renderAll();
 
         this.setModeAsSelect();
       } else if (this.isArrowMode()) {
@@ -261,7 +265,7 @@ export class PaintCanvas extends Base {
     const cursorOpacity = 0.3;
     
     if (this.isDrawingMode()) {
-      this.mousecursor = new Circle({
+      this.mousecursor = new fabric.Circle({
         left: -1000,
         top: -1000,
         radius: this.canvas.freeDrawingBrush.width / 2,
@@ -272,7 +276,7 @@ export class PaintCanvas extends Base {
       });
     } else if (this.isTextMode() || !this.isSelectMode()) {
       const pathData = this.isTextMode() ? 'M0,-10 V10' : 'M0,-10 V10 M-10,0 H10';
-      this.mousecursor = new Path(pathData, {
+      this.mousecursor = new fabric.Path(pathData, {
         left: -1000,
         top: -1000,
         fill: `rgba(255,0,0,${cursorOpacity})`,
@@ -296,7 +300,7 @@ export class PaintCanvas extends Base {
 
   protected addCursor(): void {
     const cursorCanvas = document.createElement('canvas');
-    this.canvas.wrapperEl.appendChild(cursorCanvas);
+    this.canvas.wrapperEl?.appendChild(cursorCanvas);
     cursorCanvas.setAttribute('id', 'fabric-layers-cursor-canvas');
     cursorCanvas.style.position = 'absolute';
     cursorCanvas.style.top = '0';
@@ -306,7 +310,7 @@ export class PaintCanvas extends Base {
     
     this.cursorCanvas = cursorCanvas;
     this.canvas.defaultCursor = 'none';
-    this.cursor = new StaticCanvas(cursorCanvas);
+    this.cursor = new fabric.StaticCanvas(cursorCanvas);
     this.updateCursor();
   }
 
@@ -324,7 +328,7 @@ export class PaintCanvas extends Base {
       this.canvas.requestRenderAll();
     }
 
-    if (!this.mousecursor) return;
+    if (!this.mousecursor || !(this.mousecursor instanceof fabric.Circle)) return;
 
     this.mousecursor
       .set({
@@ -342,7 +346,7 @@ export class PaintCanvas extends Base {
       this.canvas.freeDrawingBrush.width = width;
     }
 
-    if (!this.mousecursor || !(this.mousecursor instanceof Circle)) return;
+    if (!this.mousecursor || !(this.mousecursor instanceof fabric.Circle)) return;
 
     this.mousecursor
       .set({
@@ -357,7 +361,7 @@ export class PaintCanvas extends Base {
   public setFontFamily(family: string): void {
     this.fontFamily = family;
     const obj = this.canvas.getActiveObject();
-    if (obj instanceof IText) {
+    if (obj instanceof fabric.IText) {
       obj.set('fontFamily', family);
       this.canvas.requestRenderAll();
     }

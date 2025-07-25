@@ -1,4 +1,4 @@
-import fabric from 'fabric';
+import { fabric } from 'fabric';
 
 // Allow importing JSON files by using TypeScript type assertions
 import pkg from '../package.json';

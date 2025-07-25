@@ -1,5 +1,5 @@
 import { EventEmitter2 } from 'eventemitter2';
-import fabric from 'fabric';
+import { fabric } from 'fabric';
 import {
   createCanvas,
   clearCanvas,
