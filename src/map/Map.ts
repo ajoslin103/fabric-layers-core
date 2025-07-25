@@ -1,35 +1,5 @@
 import { fabric } from 'fabric';
 import panzoom from '../lib/panzoom';
-import { EventEmitter2 } from 'eventemitter2';
-
-// Define interfaces for fabric objects with custom properties
-interface MapSettings {
-  width?: number;
-  height?: number;
-  zoomEnabled?: boolean;
-  originPin?: boolean;
-  [key: string]: any;
-}
-
-// Extend fabric.Object with custom properties
-interface ExtendedFabricObject extends fabric.Object {
-  zIndex?: number;
-  keepOnZoom?: boolean;
-  class?: string;
-  parent?: fabric.Object;
-}
-
-// Extend fabric.Group with custom properties
-interface ExtendedFabricGroup extends fabric.Group {
-  getObjects(): ExtendedFabricObject[];
-  removeWithUpdate(obj: fabric.Object): fabric.Group;
-  angle?: number;
-}
-
-// Extend fabric event type
-interface ExtendedFabricEvent extends fabric.IEvent {
-  target?: ExtendedFabricObject;
-}
 import { clamp } from '../lib/mumath/index';
 
 import Base from '../core/Base';
@@ -39,6 +9,9 @@ import { Point, PointLike } from '../geometry/Point';
 import ModesMixin from './ModesMixin';
 import Measurement from '../measurement/Measurement';
 import { mix } from '../lib/mix';
+import { Layer } from '../layer/Layer';
+
+import { ExtendedFabricCanvas } from '../types/fabric-extensions';
 
 export interface PanZoomEvent {
   dz: number;
@@ -68,29 +41,6 @@ export interface MapOptions {
   originPin?: OriginPinType;
   enablePan?: boolean;
   center?: Point;
-}
-
-export interface Layer {
-  shape: fabric.Object;
-  class?: string;
-  emit?: (event: string, ...args: any[]) => void;
-}
-
-// Extend fabric Object to include our custom properties
-// declare module 'fabric-pure-browser' {
-//   interface Object {
-//     class?: string;
-//     keepOnZoom?: boolean;
-//     parent?: any;
-//     zIndex?: number;
-//     orgYaw?: number;
-//     getBounds(): Point[];
-//   }
-// }
-
-// Extend fabric.Canvas to include wrapper element property
-interface ExtendedFabricCanvas extends fabric.Canvas {
-  wrapperEl?: HTMLElement;
 }
 
 // Declare properties and methods that Map will have via mixins
@@ -138,13 +88,15 @@ export class Map extends mix(Base).with(ModesMixin) {
 
     this.defaults = { ...MAP };
     
+    // Initialize options
+    this._options = options || {};
     // set defaults
     Object.assign(this, this.defaults);
 
     // overwrite options
     Object.assign(this, this._options);
 
-    this.center = new Point(this.center);
+    this.center = options?.center ? new Point(options.center) : new Point(0, 0);
 
     // Handle container parameter
     if (typeof container === 'string') {
@@ -203,7 +155,21 @@ export class Map extends mix(Base).with(ModesMixin) {
     this.measurement = new Measurement(this);
   }
 
-  addLayer(layer: Layer): void {
+/**
+ * Clears the map canvas
+ */
+public clear(): void {
+  // Clear the canvas
+  if (this.canvas) {
+    this.canvas.clear();
+    this.canvas.renderAll();
+  }
+  
+  // Reset any other state as needed
+  this.emit('clear');
+}
+
+addLayer(layer: Layer): void {
     if (!layer.shape) {
       console.error('shape is undefined');
       return;
@@ -253,21 +219,21 @@ export class Map extends mix(Base).with(ModesMixin) {
       obj.shape.zIndex = index;
     }
     if (!this.grid?.isPinned) {
-      this.canvas.moveTo(obj.shape, obj.shape.zIndex);
+      this.canvas.moveTo(obj.shape, obj.shape.zIndex || 0);
     }
   }
 
   cloneCanvas(): HTMLCanvasElement {
     const canvas = this.canvas;
     const clone = document.createElement('canvas');
-    clone.width = canvas.width;
-    clone.height = canvas.height;
-    canvas.wrapperEl.appendChild(clone);
+    clone.width = canvas.width || 0;
+    clone.height = canvas.height || 0;
+    canvas.wrapperEl?.appendChild(clone);
     return clone;
   }
 
   setZoom(zoom: number): void {
-    const { width, height } = this.canvas;
+    const { width = 0, height = 0 } = this.canvas;
     this.zoom = clamp(zoom, this.minZoom, this.maxZoom);
     this.dx = 0;
     this.dy = 0;
@@ -284,25 +250,32 @@ export class Map extends mix(Base).with(ModesMixin) {
     let maxX = -Infinity;
     let minY = Infinity;
     let maxY = -Infinity;
-
+  
     this.canvas.forEachObject(obj => {
-      const coords = obj.getBounds();
-
-      coords.forEach(point => {
+      const rect = obj.getBoundingRect();
+      
+      // Calculate the four corners of the bounding rect
+      const topLeft = { x: rect.left, y: rect.top };
+      const topRight = { x: rect.left + rect.width, y: rect.top };
+      const bottomLeft = { x: rect.left, y: rect.top + rect.height };
+      const bottomRight = { x: rect.left + rect.width, y: rect.top + rect.height };
+      
+      // Update min and max coordinates using the corners
+      [topLeft, topRight, bottomLeft, bottomRight].forEach(point => {
         minX = Math.min(minX, point.x);
         maxX = Math.max(maxX, point.x);
         minY = Math.min(minY, point.y);
         maxY = Math.max(maxY, point.y);
       });
     });
-
+  
     return [new Point(minX, minY), new Point(maxX, maxY)];
   }
-
+  
   fitBounds(padding: number = 100): void {
     this.onResize();
 
-    const { width, height } = this.canvas;
+    const { width = 0, height = 0 } = this.canvas;
 
     this.originX = -this.canvas.width / 2;
     this.originY = -this.canvas.height / 2;

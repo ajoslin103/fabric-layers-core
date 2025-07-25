@@ -71,13 +71,6 @@ export const ICON: IconConfig = {
   anchor: [64, 64]
 };
 
-// // Extend Fabric Object prototype with custom methods and properties
-// declare module 'fabric-pure-browser' {
-//   interface Object {
-//     getBounds(): Point[];
-//   }
-// }
-
 // Set default properties for all Fabric Objects
 const proto = FabricObject.prototype;
 proto.originX = 'center';

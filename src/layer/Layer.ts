@@ -1,6 +1,7 @@
 import { fabric } from 'fabric';
 import Base from '../core/Base';
 import { Map } from '../map/Map';
+import { ExtendedFabricObject } from '../types/fabric-extensions';
 
 /**
  * Style options for a layer's fabric.js object
@@ -56,7 +57,7 @@ export class Layer extends Base {
   public style: LayerStyle;
 
   // Optional properties
-  public shape: fabric.Object;
+  public shape: ExtendedFabricObject;
   protected _map?: Map;
 
   constructor(options?: LayerOptions) {
@@ -99,7 +100,7 @@ export class Layer extends Base {
       width: 0,
       height: 0,
       ...this.style
-    });
+    }) as ExtendedFabricObject;
   }
 
   /**
