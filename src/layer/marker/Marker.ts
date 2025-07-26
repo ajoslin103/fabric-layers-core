@@ -32,7 +32,7 @@ export class Marker extends Layer {
   public textObj?: fabric.Text;
   public image?: fabric.Image;
   public circle?: fabric.Circle;
-  public shape!: ExtendedFabricGroup; // OVERRIDING INHERITED SHAPE TYPE
+  // public shape: ExtendedFabricGroup; // inherited from Layer
   public connectors: Connector[] = [];
   public style: any;
   public icon?: {

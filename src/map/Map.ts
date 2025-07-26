@@ -1,5 +1,6 @@
 import { fabric } from 'fabric';
 import panzoom from '../lib/panzoom';
+import { createPanzoomAdapter, EnhancedPanzoomEvent } from '../types/panzoom-types';
 import { clamp } from '../lib/mumath/index';
 
 import Base from '../core/Base';
@@ -52,6 +53,7 @@ declare class MapBase {
   _options: MapOptions;
 }
 
+// We're using a mixin, so we need to tell TypeScript that this class will have those methods
 export class Map extends mix(Base).with(ModesMixin) {
   public container: HTMLElement;
   public canvas: ExtendedFabricCanvas;
@@ -125,8 +127,10 @@ export class Map extends mix(Base).with(ModesMixin) {
       if (options?.autostart) this.clear();
     });
 
-    this.originX = -this.canvas.width / 2;
-    this.originY = -this.canvas.height / 2;
+    const tcw = this.canvas.width || 0;
+    const tch = this.canvas.height || 0;
+    this.originX = -tcw / 2;
+    this.originY = -tch / 2;
 
     this.canvas.absolutePan({
       x: this.originX,
@@ -140,14 +144,15 @@ export class Map extends mix(Base).with(ModesMixin) {
       this.addGrid();
     }
 
-    this.setMode(this.mode || Mode.GRAB);
+    // Use type assertion to tell TypeScript this method exists at runtime
+    (this as any).setMode(this.mode || Mode.GRAB);
 
     // Set up panzoom
-    panzoom(this.container, (e: PanZoomEvent) => {
+    panzoom(this.container, createPanzoomAdapter((e: EnhancedPanzoomEvent) => {
       this.panzoom(e);
-    });
+    }));
 
-    this.registerListeners();
+    this.registerListeners(); 
 
     setTimeout(() => {
       this.emit('ready', this);

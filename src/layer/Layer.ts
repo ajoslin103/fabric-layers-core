@@ -111,7 +111,9 @@ export class Layer extends Base {
     if (!this.shape) return;
 
     Object.keys(options).forEach(key => {
-      this.shape!.set(key as keyof fabric.Object, options[key as keyof fabric.Object]);
+      // Create an object with a single key-value pair and pass it to set
+      const updateObj = { [key]: options[key as keyof fabric.Object] };
+      this.shape!.set(updateObj);
     });
 
     if (this.shape.canvas) {

@@ -1,7 +1,7 @@
-import { Text } from 'fabric';
+import { fabric } from 'fabric';
 import { Layer, LayerOptions } from './Layer';
-import { Group } from './Group';
 import { Point, PointLike } from '../geometry/Point';
+import { ExtendedFabricGroup } from '../types/fabric-extensions';
 
 export interface TooltipOptions extends LayerOptions {
   content?: string;
@@ -25,8 +25,8 @@ export class Tooltip extends Layer {
   public fill: string;
   public stroke: string;
   public position: Point;
-  protected textObj?: Text;
-  public shape!: Group; // Assigned in init()
+  protected textObj?: fabric.Text;
+  // public shape!: Group; // Inherited from Layer
 
   /**
    * Create a new Tooltip
@@ -60,7 +60,7 @@ export class Tooltip extends Layer {
 
     // Create text object if content is provided
     if (this.content) {
-      this.textObj = new Text(this.content, {
+      this.textObj = new fabric.Text(this.content, {
         fontSize: this.size,
         fill: this.textColor
       });
@@ -77,7 +77,7 @@ export class Tooltip extends Layer {
     if (this.textObj) {
       objects.push(this.textObj);
     }
-    this.shape = new Group(objects, this.style);
+    this.shape = new fabric.Group(objects, this.style) as ExtendedFabricGroup;
     
     // Use Promise instead of process.nextTick for browser compatibility
     Promise.resolve().then(() => {
