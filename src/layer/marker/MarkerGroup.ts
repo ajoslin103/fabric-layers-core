@@ -1,5 +1,7 @@
+import { fabric } from 'fabric';
 import { Rect } from '../vector/Rect';
 import { Layer, LayerOptions } from '../Layer';
+import { ExtendedFabricObject } from '../../types/fabric-extensions';
 
 export type Bounds = number[][];
 
@@ -22,6 +24,7 @@ export class MarkerGroup extends Layer {
   public color?: string;
   public coords: MarkerGroupCoords;
   public style: any;
+  // shape property is inherited from Layer class
 
   constructor(bounds: Bounds, options: MarkerGroupOptions = {}) {
     options.bounds = bounds;
@@ -55,6 +58,14 @@ export class MarkerGroup extends Layer {
       height: 0
     };
     
+    // Initialize shape with a default Rect as required by the Layer base class
+    // This will be updated in the draw() method
+    this.shape = new Rect({
+      ...this.style,
+      width: 0,
+      height: 0
+    }) as unknown as ExtendedFabricObject;
+    
     this.draw();
   }
 
@@ -66,13 +77,31 @@ export class MarkerGroup extends Layer {
   draw(): void {
     if (!this.bounds) return;
     if (!this.bounds[0] || !this.bounds[1]) return;
-
-    const width = this.bounds[1][0] - this.bounds[0][0];
-    const height = this.bounds[1][1] - this.bounds[0][1];
+    
+    const bounds0 = this.bounds[0];
+    const bounds1 = this.bounds[1];
+    
+    if (!Array.isArray(bounds0) || bounds0.length < 2 ||
+        !Array.isArray(bounds1) || bounds1.length < 2) {
+      return;
+    }
+    
+    const x0 = bounds0[0];
+    const y0 = bounds0[1];
+    const x1 = bounds1[0];
+    const y1 = bounds1[1];
+    
+    if (typeof x0 !== 'number' || typeof y0 !== 'number' || 
+        typeof x1 !== 'number' || typeof y1 !== 'number') {
+      return;
+    }
+    
+    const width = x1 - x0;
+    const height = y1 - y0;
     
     this.coords = {
-      left: this.bounds[0][0] + width / 2,
-      top: this.bounds[0][1] + height / 2,
+      left: x0 + width / 2,
+      top: y0 + height / 2,
       width,
       height
     };
@@ -84,7 +113,8 @@ export class MarkerGroup extends Layer {
         this.style = {}; // Initialize with defaults if undefined
       }
       Object.assign(this.style, this.coords);
-      this.shape = new Rect(this.style);
+      // Use fabric.Rect directly with casting to match the Layer class implementation
+      this.shape = new fabric.Rect(this.style) as ExtendedFabricObject;
     }
   }
 }
