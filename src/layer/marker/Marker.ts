@@ -28,6 +28,7 @@ export class Marker extends Layer {
   public textColor: string;
   public fill: string | boolean;
   public stroke: string;
+  public type: string = 'marker';
   public links: any[] = [];
   public textObj?: fabric.Text;
   public image?: fabric.Image;

@@ -65,6 +65,7 @@
     "@types/node": "^20.19.9",
     "@typescript-eslint/eslint-plugin": "^7.1.0",
     "@typescript-eslint/parser": "^7.1.0",
+    "canvas": "^3.1.2",
     "chai": "^4.3.10",
     "conventional-changelog-cli": "^2.2.2",
     "core-js": "^3.35.1",
