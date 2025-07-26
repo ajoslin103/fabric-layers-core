@@ -53,8 +53,9 @@ declare class MapBase {
   _options: MapOptions;
 }
 
-// We're using a mixin, so we need to tell TypeScript that this class will have those methods
-export class Map extends mix(Base).with(ModesMixin) {
+// Use a type assertion to tell TypeScript to trust our mixin usage
+// This works because Map implements the properties ModesMixin needs (canvas, mode)
+export class Map extends mix(Base).with(ModesMixin as any) {
   public container: HTMLElement;
   public canvas: ExtendedFabricCanvas;
   public context: CanvasRenderingContext2D;
