@@ -86,7 +86,7 @@ const panzoom = (
   let initX = 0;
   let initY = 0;
   let init = true;
-  const initFn = function(e: MouseEvent | TouchEvent): void {
+  const initFn = function(_e: MouseEvent | TouchEvent): void {
     init = true;
   };
   element.addEventListener('mousedown', initFn);
@@ -164,7 +164,7 @@ const panzoom = (
 
   magicScroll = new MagicScroll(element, 80, 12, 0);
 
-  magicScroll.onUpdate = (dy: number, e?: WheelEvent | MouseEvent): void => {
+  magicScroll.onUpdate = (dy: number, _e?: WheelEvent | MouseEvent): void => {
     schedule({
       target: element,
       type: 'mouse',

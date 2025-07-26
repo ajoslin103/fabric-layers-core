@@ -10,10 +10,10 @@ import MagicScroll from './MagicScroll';
 export default function mouseWheelListen(
   element: HTMLElement | Window | Document | ((delta: number, ev?: WheelEvent | MouseEvent) => void),
   callback?: ((delta: number, ev?: WheelEvent | MouseEvent) => void) | boolean,
-  noScroll?: boolean
+  _noScroll?: boolean
 ): (delta: number, ev?: WheelEvent | MouseEvent) => void {
   if (typeof element === 'function') {
-    noScroll = !!callback;
+    // noScroll = !!callback;
     callback = element;
     element = window;
   }
