@@ -1,16 +1,15 @@
 import alpha from '../lib/color-alpha';
 import Base from '../core/Base';
-// Import with type assertion to avoid TypeScript errors
-const mumath = require('../lib/mumath/index') as {
-  clamp: (value: number, min?: number, max?: number) => number;
-  almost: (a: number, b: number, precision?: number) => boolean;
-  len: (x: number, y: number) => number;
-  parseUnit: (value: string | number) => [number, string];
-  toPx: (value: string | number, base?: number) => number;
-  isObj: (value: any) => boolean;
-};
 
-const { clamp, almost, len, parseUnit, toPx, isObj } = mumath;
+import {
+  clamp,
+  almost,
+  len,
+  parseUnit,
+  toPx,
+  isObj,
+} from '../lib/mumath/index';
+
 import gridStyle from './gridStyle';
 import Axis from './Axis';
 import { Point, PointLike } from '../geometry/Point';
@@ -203,20 +202,26 @@ export class Grid extends Base {
 
   getCenterCoords(): { x: number; y: number } {
     let state = this.state.x;
-    let [width, height] = state.shape;
-    let [pt, pr, pb, pl] = state.padding;
+    // Ensure shape and padding are defined with default values if needed
+    let [width = 0, height = 0] = state.shape || [0, 0];
+    // Use default value of 0 for each padding element if undefined
+    let [pt = 0, pr = 0, pb = 0, pl = 0] = state.padding || [0, 0, 0, 0];
+    
     // Update state on the opposite axis before calling getCoords
-    if ('setState' in state.opposite!.coordinate) {
-      (state.opposite!.coordinate as any).setState(state.opposite!);
+    if (state.opposite && 'setState' in state.opposite.coordinate) {
+      (state.opposite.coordinate as any).setState(state.opposite);
     }
+    
     // Ensure axisOrigin is defined before passing it to getCoords
-    const axisOrigin = state.coordinate.axisOrigin ?? 0;
-    let axisCoords = state.opposite!.coordinate.getCoords(
+    const axisOrigin = state.coordinate?.axisOrigin ?? 0;
+    let axisCoords = state.opposite?.coordinate.getCoords(
       [axisOrigin]
-    );
+    ) || [];
+    
     // Ensure array element exists before using it
     const axisCoord1 = axisCoords[1] ?? 0;
     const y = pt + axisCoord1 * (height - pt - pb);
+    
     // Ensure state.y is not undefined before assignment
     if (this.state.y) {
       state = this.state.y;
@@ -229,7 +234,8 @@ export class Grid extends Base {
         height = this.canvas?.height ?? 0;
       }
       if (state.padding) {
-        [pt, pr, pb, pl] = state.padding;
+        // Provide default values inline with destructuring
+        [pt = 0, pr = 0, pb = 0, pl = 0] = state.padding;
       } else {
         // Default padding values if undefined
         pt = pr = pb = pl = 0;
@@ -364,7 +370,14 @@ export class Grid extends Base {
       state.fontSize = coord.fontSize;
     } else {
       const units = parseUnit(coord.fontSize ?? '12px');
-      state.fontSize = units[0] * toPx(units[1]);
+      const u0 = units[0];
+      const u1 = units[1];
+      if (u0 && u1) {
+        const px = toPx(u1);
+        if (px) {
+          state.fontSize = u0 * px;
+        }
+      }
     }
     state.fontFamily = coord.fontFamily ?? this.defaults.fontFamily ?? 'sans-serif';
 
@@ -455,7 +468,7 @@ export class Grid extends Base {
         // Ensure value is a string before parsing to float
         state.lines.push(parseFloat(String(value)));
         state.lineColors.push(null);
-        state.ticks.push(null);
+        state.ticks.push(0);
       });
     }
 
@@ -649,10 +662,25 @@ export class Grid extends Base {
       
       ctx.strokeStyle = color;
       ctx.beginPath();
-      const x1 = pl + coords[i] * (width - pr - pl);
-      const y1 = pt + coords[i + 1] * (height - pb - pt);
-      const x2 = pl + coords[i + 2] * (width - pr - pl);
-      const y2 = pt + coords[i + 3] * (height - pb - pt);
+      
+      if (pl === undefined || pr === undefined || pt === undefined || pb === undefined) {
+        continue;
+      }
+      
+      const c0 = coords[i];
+      const c1 = coords[i + 1];
+      const c2 = coords[i + 2];
+      const c3 = coords[i + 3];
+
+      if (c0 === undefined || c1 === undefined || c2 === undefined || c3 === undefined) {
+        continue;
+      }
+
+      const x1 = pl + c0 * (width - pr - pl);
+      const y1 = pt + c1 * (height - pb - pt);
+      const x2 = pl + c2 * (width - pr - pl);
+      const y2 = pt + c3 * (height - pb - pt);
+
       ctx.moveTo(x1, y1);
       ctx.lineTo(x2, y2);
       ctx.stroke();
@@ -687,28 +715,41 @@ export class Grid extends Base {
       const y1 = coords[j + 1];
       const x2 = coords[j + 2];
       const y2 = coords[j + 3];
-      const xDif = (x2 - x1) * axisRatio;
-      const yDif = (y2 - y1) * axisRatio;
+      const xDif = (x2 ?? 0) - (x1 ?? 0);
+      const yDif = (y2 ?? 0) - (y1 ?? 0);
       // Add null safety to padding values
       const safePl = pl ?? 0;
       const safePr = pr ?? 0;
       const safePt = pt ?? 0;
       const safePb = pb ?? 0;
       
+      const ni0 = normals[i];
+      const ni1 = normals[i + 1];
+      const tk = ticks[k];
+
+      if (!ni0 || !ni1 || !tk) continue;
+
       const tick = [
-        (normals[i] * ticks[k]) / (width - safePl - safePr),
-        (normals[i + 1] * ticks[k]) / (height - safePt - safePb)
+        (ni0 * tk) / (width - safePl - safePr),
+        (ni1 * tk) / (height - safePt - safePb)
       ];
-      tickCoords.push(normals[i] * (xDif + tick[0] * state.tickAlign) + x1);
-      tickCoords.push(normals[i + 1] * (yDif + tick[1] * state.tickAlign) + y1);
-      tickCoords.push(normals[i] * (xDif - tick[0] * (1 - state.tickAlign)) + x1);
-      tickCoords.push(normals[i + 1] * (yDif - tick[1] * (1 - state.tickAlign)) + y1);
+      
+      const t0 = tick[0];
+      const t1 = tick[1];
+      if (!t0 || !t1) continue;
+      
+      if (!x1 || !y1) continue;
+      
+      tickCoords.push(ni0 * (xDif + t0 * state.tickAlign) + x1);
+      tickCoords.push(ni1 * (yDif + t1 * state.tickAlign) + y1);
+      tickCoords.push(ni0 * (xDif - t0 * (1 - state.tickAlign)) + x1);
+      tickCoords.push(ni1 * (yDif - t1 * (1 - state.tickAlign)) + y1);
       // Initialize labelCoords array if undefined
       if (!state.labelCoords) {
         state.labelCoords = [];
       }
-      state.labelCoords.push(normals[i] * xDif + x1);
-      state.labelCoords.push(normals[i + 1] * yDif + y1);
+      state.labelCoords.push(ni0 * xDif + x1);
+      state.labelCoords.push(ni1 * yDif + y1);
     }
 
     // draw ticks
@@ -716,11 +757,18 @@ export class Grid extends Base {
       ctx.lineWidth = state.axisWidth / 2;
       ctx.beginPath();
       for (let i = 0, j = 0; i < tickCoords.length; i += 4, j += 1) {
-        if (almost(state.lines[j], state.opposite?.coordinate.axisOrigin ?? 0)) continue;
-        const x1 = (pl ?? 0) + tickCoords[i] * (width - (pl ?? 0) - (pr ?? 0));
-        const y1 = (pt ?? 0) + tickCoords[i + 1] * (height - (pt ?? 0) - (pb ?? 0));
-        const x2 = (pl ?? 0) + tickCoords[i + 2] * (width - (pl ?? 0) - (pr ?? 0));
-        const y2 = (pt ?? 0) + tickCoords[i + 3] * (height - (pt ?? 0) - (pb ?? 0));
+        const line = state.lines[j];
+        if (!line) continue;
+        const tc0 = tickCoords[i];
+        const tc1 = tickCoords[i + 1];
+        const tc2 = tickCoords[i + 2];
+        const tc3 = tickCoords[i + 3];
+        if (!tc0 || !tc1 || !tc2 || !tc3) continue;
+        if (almost(line, state.opposite?.coordinate.axisOrigin ?? 0)) continue;
+        const x1 = (pl ?? 0) + tc0 * (width - (pl ?? 0) - (pr ?? 0));
+        const y1 = (pt ?? 0) + tc1 * (height - (pt ?? 0) - (pb ?? 0));
+        const x2 = (pl ?? 0) + tc2 * (width - (pl ?? 0) - (pr ?? 0));
+        const y2 = (pt ?? 0) + tc3 * (height - (pt ?? 0) - (pb ?? 0));
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
       }
