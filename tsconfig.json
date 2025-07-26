@@ -3,28 +3,10 @@
     // Language and Environment
     "target": "ES2020",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "types": [],
     "moduleResolution": "node",
     "module": "ESNext",
     "jsx": "preserve",
     
-    // Modules
-    "baseUrl": ".",
-    "resolveJsonModule": true,
-    
-    "typeRoots": ["./node_modules/@types", "./src"],
-    "paths": {
-      "lib/*": ["./src/lib/*"],
-      "core/*": ["./src/core/*"],
-      "geometry/*": ["./src/geometry/*"],
-      "grid/*": ["./src/grid/*"],
-      "layer/*": ["./src/layer/*"],
-      "map/*": ["./src/map/*"],
-      "measurement/*": ["./src/measurement/*"],
-      "paint/*": ["./src/paint/*"],
-      "*": ["node_modules/*"]
-    },
-
     // Type Checking
     "strict": true,
     "noImplicitAny": true,
@@ -40,6 +22,15 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     
+    // Modules
+    "baseUrl": "./src",
+    "paths": {
+      "*": ["node_modules/*"]
+    },
+    "rootDir": "./src",
+    "resolveJsonModule": true,
+    "preserveSymlinks": true,
+    
     // Emit
     "declaration": true,
     "declarationDir": "./dist/types",
@@ -47,8 +38,6 @@
     "sourceMap": true,
     "removeComments": false,
     "importHelpers": true,
-    "emitDeclarationOnly": false,
-    "noEmit": false,
     
     // Interop Constraints
     "esModuleInterop": true,
