@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### 2.0.1 (2025-07-26)
+
 ## [1.1.5](https://github.com/ajoslin103/fabric-layers/compare/v1.1.4...v1.1.5) (2025-06-20)
 
 ### Bug Fixes
