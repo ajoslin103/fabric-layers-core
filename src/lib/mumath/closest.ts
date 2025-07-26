@@ -3,14 +3,25 @@
  */
 
 function closest(num: number, arr: number[]): number {
-  let curr = arr[0];
-  let diff = Math.abs(num - curr);
+  // Handle empty array
+  if (arr.length === 0) {
+    return num; // Return the input number if no array elements to compare
+  }
   
-  for (let val = 0; val < arr.length; val++) {
-    const newdiff = Math.abs(num - arr[val]);
+  // Now we can safely access arr[0] since we know the array is not empty
+  // Using non-null assertion because we've checked arr.length > 0
+  const firstValue = arr[0]!;
+  let curr = firstValue;
+  let diff = Math.abs(num - firstValue);
+  
+  // Start from index 1 since we've already processed index 0
+  for (let val = 1; val < arr.length; val++) {
+    // Using non-null assertion because val < arr.length ensures this element exists
+    const current = arr[val]!;
+    const newdiff = Math.abs(num - current);
     if (newdiff < diff) {
       diff = newdiff;
-      curr = arr[val];
+      curr = current;
     }
   }
   

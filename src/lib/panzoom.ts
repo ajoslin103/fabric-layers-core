@@ -183,12 +183,14 @@ const panzoom = (
   const mult = 2;
   let initialCoords: [number, number] | null;
 
-  pinch.on('start', (curr: number) => {
+  pinch.on('start', (_curr: number) => {
     if (!pinch.fingers || pinch.fingers.length < 2) return;
     
     const f1 = pinch.fingers[0];
     const f2 = pinch.fingers[1];
 
+    if (!f1 || !f2) return;
+    
     initialCoords = [
       f2.position[0] * 0.5 + f1.position[0] * 0.5,
       f2.position[1] * 0.5 + f1.position[1] * 0.5

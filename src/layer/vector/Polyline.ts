@@ -2,6 +2,7 @@ import { fabric } from 'fabric';
 import { Layer, LayerOptions } from '../Layer';
 import { Point, PointLike } from '../../geometry/Point';
 import { Group } from '../Group';
+import { ExtendedFabricObject } from '../../types/fabric-extensions';
 
 export interface PolylineOptions extends LayerOptions {
   strokeWidth?: number;
@@ -19,7 +20,8 @@ export class Polyline extends Layer {
   public points: Point[] = [];
   public lines: fabric.Line[] = [];
   public lineOptions: LineOptions;
-  public shape: Group;
+  public shape!: ExtendedFabricObject; // Type as ExtendedFabricObject to match parent class
+  private _shapeGroup: Group; // Store the actual Group instance separately
   public strokeWidth: number;
   protected _points: PointLike[];
 
@@ -37,16 +39,20 @@ export class Polyline extends Layer {
 
     this.lineOptions = {
       strokeWidth: this.strokeWidth,
-      stroke: this.color || 'grey',
-      fill: this.fill || false
+      stroke: options.stroke || 'grey',
+      fill: options.fill || false
     };
 
-    this.shape = new Group([], {
+    // Create a Group for the shape
+    this._shapeGroup = new Group([], {
       selectable: false,
       hasControls: false,
       class: this.class,
       parent: this
     });
+    
+    // Assign the group to shape with type assertion
+    this.shape = this._shapeGroup as unknown as ExtendedFabricObject;
 
     this.setPoints(this._points);
   }
@@ -61,12 +67,16 @@ export class Polyline extends Layer {
       const j = this.points.length - 2;
       const p1 = this.points[i];
       const p2 = this.points[j];
-      const line = new fabric.Line(
-        [...p1.getArray(), ...p2.getArray()], 
-        this.lineOptions
-      );
-      this.lines.push(line);
-      this.shape.addWithUpdate(line);
+      
+      // Ensure both points exist before creating a line
+      if (p1 && p2) {
+        const line = new fabric.Line(
+          [...p1.getArray(), ...p2.getArray()], 
+          this.lineOptions as fabric.ILineOptions
+        );
+        this.lines.push(line);
+        this._shapeGroup.addWithUpdate(line);
+      }
     }
   }
 
@@ -88,7 +98,7 @@ export class Polyline extends Layer {
 
   removeLines(): void {
     for (let i = 0; i < this.lines.length; i += 1) {
-      this.shape.remove(this.lines[i]);
+      this._shapeGroup.remove(this.lines[i] as fabric.Object);
     }
     this.lines = [];
   }

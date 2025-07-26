@@ -6,7 +6,7 @@
  */
 export default function alpha(color: string, value?: number): string {
   const obj = color.replace(/[^\d,]/g, '').split(',');
-  if (value == null) value = parseFloat(obj[3]) || 1;
+  if (value == null) value = parseFloat(obj[3] as string) || 1;
   obj[3] = value.toString();
   return 'rgba(' + obj.join(',') + ')';
 }

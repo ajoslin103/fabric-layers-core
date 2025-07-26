@@ -1,11 +1,17 @@
 import { fabric } from 'fabric';
 import { Point } from '../geometry/Point';
+import { ExtendedFabricObject } from '../types/fabric-extensions';
 
-export interface GroupOptions {
+export interface GroupOptions extends fabric.IGroupOptions {
+  zIndex?: number;
+  orgYaw?: number;
+  keepOnZoom?: boolean;
+  class?: string;
+  parent?: any;
   [key: string]: any; // Allow additional properties
 }
 
-export class Group extends fabric.Group {
+export class Group extends fabric.Group implements ExtendedFabricObject {
   /**
    * Create a new Group
    * @param objects - The fabric objects to group

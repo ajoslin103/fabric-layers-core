@@ -86,10 +86,10 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
   function enable(): void {
     if (enabled) return;
     enabled = true;
-    target!.addEventListener('touchstart', onTouchStart, false);
-    target!.addEventListener('touchmove', onTouchMove, false);
-    target!.addEventListener('touchend', onTouchRemoved, false);
-    target!.addEventListener('touchcancel', onTouchRemoved, false);
+    target!.addEventListener('touchstart', onTouchStart as EventListener, false);
+    target!.addEventListener('touchmove', onTouchMove as EventListener, false);
+    target!.addEventListener('touchend', onTouchRemoved as EventListener, false);
+    target!.addEventListener('touchcancel', onTouchRemoved as EventListener, false);
   }
 
   /**
@@ -103,10 +103,10 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
     fingers[1] = null;
     lastDistance = 0;
     ended = false;
-    target!.removeEventListener('touchstart', onTouchStart, false);
-    target!.removeEventListener('touchmove', onTouchMove, false);
-    target!.removeEventListener('touchend', onTouchRemoved, false);
-    target!.removeEventListener('touchcancel', onTouchRemoved, false);
+    target!.removeEventListener('touchstart', onTouchStart as EventListener, false);
+    target!.removeEventListener('touchmove', onTouchMove as EventListener, false);
+    target!.removeEventListener('touchend', onTouchRemoved as EventListener, false);
+    target!.removeEventListener('touchcancel', onTouchRemoved as EventListener, false);
   }
 
   /**
@@ -115,7 +115,7 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
   function onTouchStart(ev: TouchEvent): void {
     for (let i = 0; i < ev.changedTouches.length; i++) {
       const newTouch = ev.changedTouches[i];
-      const idx = indexOfTouch(newTouch);
+      const idx = indexOfTouch(newTouch as Touch);
 
       if (idx === -1 && activeCount < 2) {
         const first = activeCount === 0;
@@ -130,11 +130,11 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
         activeCount++;
 
         // update touch event & position
-        newFinger.touch = newTouch;
-        eventOffset(newTouch, target as HTMLElement, newFinger.position);
+        newFinger.touch = newTouch as Touch;
+        eventOffset(newTouch as unknown as MouseEvent, target as HTMLElement, newFinger.position);
 
-        const oldTouch = fingers[oldIndex] ? fingers[oldIndex]!.touch : undefined;
-        emitter.emit('place', newTouch, oldTouch);
+        const oldTouch = fingers[oldIndex] ? fingers[oldIndex]!.touch : null;
+        emitter.emit('place', newTouch as Touch, oldTouch);
 
         if (!first) {
           const initialDistance = computeDistance();
@@ -153,11 +153,11 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
     let changed = false;
     for (let i = 0; i < ev.changedTouches.length; i++) {
       const movedTouch = ev.changedTouches[i];
-      const idx = indexOfTouch(movedTouch);
+      const idx = indexOfTouch(movedTouch as Touch);
       if (idx !== -1) {
         changed = true;
-        fingers[idx]!.touch = movedTouch; // avoid caching touches
-        eventOffset(movedTouch, target as HTMLElement, fingers[idx]!.position);
+        fingers[idx]!.touch = movedTouch as Touch; // avoid caching touches
+        eventOffset(movedTouch as unknown as MouseEvent, target as HTMLElement, fingers[idx]!.position);
       }
     }
 
@@ -174,13 +174,13 @@ function touchPinch(target?: HTMLElement | Window): TouchPinchEmitter {
   function onTouchRemoved(ev: TouchEvent): void {
     for (let i = 0; i < ev.changedTouches.length; i++) {
       const removed = ev.changedTouches[i];
-      const idx = indexOfTouch(removed);
+      const idx = indexOfTouch(removed as Touch);
 
       if (idx !== -1) {
         fingers[idx] = null;
         activeCount--;
         const otherIdx = idx === 0 ? 1 : 0;
-        const otherTouch = fingers[otherIdx] ? fingers[otherIdx]!.touch : undefined;
+        const otherTouch = fingers[otherIdx] ? fingers[otherIdx]!.touch : null;
         emitter.emit('lift', removed, otherTouch);
       }
     }

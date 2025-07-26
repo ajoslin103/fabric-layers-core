@@ -27,17 +27,13 @@ function timeoutDefer(fn: Function): number {
 /**
  * Function binding utility
  */
-export function bind(fn: Function, obj: any): Function {
-  const slice = Array.prototype.slice;
-
+export function bind(fn: Function, obj: any, ...boundArgs: any[]): Function {
   if (fn.bind) {
-    return fn.bind.apply(fn, slice.call(arguments, 1));
+    return fn.bind(obj, ...boundArgs);
   }
-
-  const args = slice.call(arguments, 2);
-
-  return function(this: any): any {
-    return fn.apply(obj, args.length ? args.concat(slice.call(arguments)) : arguments);
+  
+  return function(this: any, ...callArgs: any[]): any {
+    return fn.apply(obj, boundArgs.length ? boundArgs.concat(callArgs) : callArgs);
   };
 }
 

@@ -54,7 +54,7 @@ class MagicScroll {
       if (!scope.moving) scope.update(e);
     }
 
-    target.addEventListener('wheel', scrolled, { passive });
+    target.addEventListener('wheel', scrolled as EventListener, { passive });
     target.addEventListener('DOMMouseScroll', scrolled as EventListener, { passive });
   }
 

@@ -36,12 +36,20 @@ export default (ev: MouseEvent | TouchEvent, toElement?: HTMLElement): EventPosi
 
   if (hasTouches) {
     const touchEv = ev as TouchEvent;
-    if (isNum(touchEv.touches[0].pageX) && isNum(touchEv.touches[0].pageY)) {
-      pageX = touchEv.touches[0].pageX;
-      pageY = touchEv.touches[0].pageY;
-    } else if (isNum(touchEv.touches[0].clientX) && isNum(touchEv.touches[0].clientY)) {
-      pageX = orgEv.touches[0].clientX;
-      pageY = orgEv.touches[0].clientY;
+    // Make sure touchEv.touches[0] exists before trying to access it
+    const firstTouch = touchEv.touches[0];
+    if (firstTouch && isNum(firstTouch.pageX) && isNum(firstTouch.pageY)) {
+      pageX = firstTouch.pageX;
+      pageY = firstTouch.pageY;
+    } else if (firstTouch && isNum(firstTouch.clientX) && isNum(firstTouch.clientY)) {
+      // Make sure orgEv.touches exists and has elements before accessing
+      if (orgEv.touches && orgEv.touches.length > 0) {
+        const orgFirstTouch = orgEv.touches[0];
+        if (orgFirstTouch) {
+          pageX = orgFirstTouch.clientX;
+          pageY = orgFirstTouch.clientY;
+        }
+      }
     }
   } else if (isNum((ev as MouseEvent).pageX) && isNum((ev as MouseEvent).pageY)) {
     pageX = (ev as MouseEvent).pageX;

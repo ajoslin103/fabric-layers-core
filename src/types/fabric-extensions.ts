@@ -13,6 +13,7 @@ export interface ExtendedFabricCanvas extends fabric.Canvas {
  */
 export interface ExtendedFabricObject extends fabric.Object {
   zIndex?: number;
+  orgYaw?: number;
   keepOnZoom?: boolean;
   class?: string;
   parent?: any;

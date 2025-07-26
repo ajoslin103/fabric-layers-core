@@ -16,9 +16,15 @@ export default function scale(minStep: number, srcSteps: number[]): number {
 
   // find closest scale
   let step = 0;
+  
+  // Find the first step greater than or equal to minStep
   for (let i = 0; i < steps.length; i++) {
-    step = steps[i];
-    if (step >= minStep) break;
+    const currentStep = steps[i];
+    // Ensure the step exists and is valid
+    if (currentStep !== undefined && currentStep >= minStep) {
+      step = currentStep;
+      break;
+    }
   }
 
   return step;

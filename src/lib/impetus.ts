@@ -52,16 +52,16 @@ interface BoundCheckResult {
 window.addEventListener('touchmove', () => {});
 
 export default class Impetus {
-  private sourceEl: HTMLElement | Document;
-  private updateCallback: (x: number, y: number) => void;
+  private sourceEl!: HTMLElement | Document;
+  private updateCallback!: (x: number, y: number) => void;
   private stopCallback?: (el: HTMLElement | Document) => void;
-  private multiplier: number;
-  private friction: number;
+  private multiplier!: number;
+  private friction!: number;
   private boundXmin?: number;
   private boundXmax?: number;
   private boundYmin?: number;
   private boundYmax?: number;
-  private bounce: boolean;
+  private bounce!: boolean;
   private pointerLastX: number = 0;
   private pointerLastY: number = 0;
   private pointerCurrentX: number = 0;
@@ -71,7 +71,7 @@ export default class Impetus {
   private decVelY: number = 0;
   private targetX: number = 0;
   private targetY: number = 0;
-  private stopThreshold: number;
+  private stopThreshold!: number;
   private ticking: boolean = false;
   private pointerActive: boolean = false;
   private paused: boolean = false;
@@ -133,8 +133,8 @@ export default class Impetus {
         this.boundYmax = boundY[1];
       }
 
-      this.sourceEl.addEventListener('touchstart', this.onDown);
-      this.sourceEl.addEventListener('mousedown', this.onDown);
+      this.sourceEl.addEventListener('touchstart', this.onDown as EventListener);
+      this.sourceEl.addEventListener('mousedown', this.onDown as EventListener);
     };
 
     init();
@@ -146,8 +146,8 @@ export default class Impetus {
    * this will remove the previous event listeners
    */
   destroy = (): null => {
-    this.sourceEl.removeEventListener('touchstart', this.onDown);
-    this.sourceEl.removeEventListener('mousedown', this.onDown);
+    this.sourceEl.removeEventListener('touchstart', this.onDown as EventListener);
+    this.sourceEl.removeEventListener('mousedown', this.onDown as EventListener);
 
     this.cleanUpRuntimeEvents();
 
@@ -229,17 +229,17 @@ export default class Impetus {
     // Remove all touch events added during 'onDown' as well.
     document.removeEventListener(
       'touchmove',
-      this.onMove,
-      getPassiveSupported() ? { passive: false } : false
+      this.onMove as EventListener,
+      getPassiveSupported() ? { passive: false } as EventListenerOptions : false
     );
-    document.removeEventListener('touchend', this.onUp);
+    document.removeEventListener('touchend', this.onUp as EventListener);
     document.removeEventListener('touchcancel', this.stopTracking);
     document.removeEventListener(
       'mousemove',
-      this.onMove,
-      getPassiveSupported() ? { passive: false } : false
+      this.onMove as EventListener,
+      getPassiveSupported() ? { passive: false } as EventListenerOptions : false
     );
-    document.removeEventListener('mouseup', this.onUp);
+    document.removeEventListener('mouseup', this.onUp as EventListener);
   };
 
   /**
@@ -280,6 +280,17 @@ export default class Impetus {
     if (ev.type === 'touchmove' || ev.type === 'touchstart' || ev.type === 'touchend') {
       const touchEv = ev as TouchEvent;
       const touch = touchEv.targetTouches[0] || touchEv.changedTouches[0];
+      
+      // Ensure the touch object exists
+      if (!touch) {
+        // Return a default value if no touch is found
+        return {
+          x: 0,
+          y: 0,
+          id: null
+        };
+      }
+      
       return {
         x: touch.clientX,
         y: touch.clientY,
@@ -362,7 +373,8 @@ export default class Impetus {
   private addTrackingPoint = (x: number, y: number): void => {
     const time = Date.now();
     while (this.trackingPoints.length > 0) {
-      if (time - this.trackingPoints[0].time <= 100) {
+      const firstPoint = this.trackingPoints[0];
+      if (firstPoint && time - firstPoint.time <= 100) {
         break;
       }
       this.trackingPoints.shift();
@@ -458,14 +470,26 @@ export default class Impetus {
    * Initialize animation of values coming to a stop
    */
   private startDecelAnim = (): void => {
+    // Check if we have tracking points
+    if (this.trackingPoints.length < 2) {
+      // Not enough points to calculate velocity
+      return;
+    }
+    
     const firstPoint = this.trackingPoints[0];
     const lastPoint = this.trackingPoints[this.trackingPoints.length - 1];
+
+    // Both points must exist to calculate velocity
+    if (!firstPoint || !lastPoint) {
+      return;
+    }
 
     const xOffset = lastPoint.x - firstPoint.x;
     const yOffset = lastPoint.y - firstPoint.y;
     const timeOffset = lastPoint.time - firstPoint.time;
 
-    const D = timeOffset / 15 / this.multiplier;
+    // Avoid division by zero
+    const D = timeOffset / 15 / this.multiplier || 1; // Default to 1 if calculation results in 0
 
     this.decVelX = xOffset / D || 0; // prevent NaN
     this.decVelY = yOffset / D || 0;

@@ -11,7 +11,7 @@ import Measurement from '../measurement/Measurement';
 import { mix } from '../lib/mix';
 import { Layer } from '../layer/Layer';
 
-import { ExtendedFabricCanvas } from '../types/fabric-extensions';
+import { ExtendedFabricCanvas, ExtendedFabricEvent, ExtendedFabricGroup, ExtendedFabricObject } from '../types/fabric-extensions';
 
 export interface PanZoomEvent {
   dz: number;
@@ -78,6 +78,7 @@ export class Map extends mix(Base).with(ModesMixin) {
   public originPin: OriginPinType = OriginPinType.NONE;
   public pinMargin: number = 10;
   public zoomOverMouse: boolean = true;
+  public zoomEnabled: boolean = true;
   public minZoom: number = 0;
   public maxZoom: number = 20;
   public mode: Mode = Mode.GRAB;
@@ -276,9 +277,8 @@ addLayer(layer: Layer): void {
     this.onResize();
 
     const { width = 0, height = 0 } = this.canvas;
-
-    this.originX = -this.canvas.width / 2;
-    this.originY = -this.canvas.height / 2;
+    this.originY = -height / 2;
+    this.originX = -width / 2;
 
     const bounds = this.getBounds();
 
@@ -287,8 +287,8 @@ addLayer(layer: Layer): void {
 
     const boundWidth = Math.abs(bounds[0].x - bounds[1].x) + padding;
     const boundHeight = Math.abs(bounds[0].y - bounds[1].y) + padding;
-    const scaleX = width / boundWidth;
     const scaleY = height / boundHeight;
+    const scaleX = width / boundWidth;
 
     this.zoom = Math.min(scaleX, scaleY);
 
@@ -310,11 +310,11 @@ addLayer(layer: Layer): void {
   }
 
   reset(): void {
-    const { width, height } = this.canvas;
+    const { width = 0, height = 0 } = this.canvas;
     this.zoom = (this._options as MapOptions)?.zoom || 1;
     this.center = new Point();
-    this.originX = -this.canvas.width / 2;
-    this.originY = -this.canvas.height / 2;
+    this.originX = -width / 2;
+    this.originY = -height / 2;
     this.canvas.absolutePan({
       x: this.originX,
       y: this.originY
@@ -328,11 +328,10 @@ addLayer(layer: Layer): void {
   }
 
   onResize(width?: number, height?: number): void {
-    const oldWidth = this.canvas.width;
-    const oldHeight = this.canvas.height;
+    const { width: oldWidth = 0, height: oldHeight = 0 } = this.canvas;
 
-    width = width || this.container.clientWidth;
     height = height || this.container.clientHeight;
+    width = width || this.container.clientWidth;
 
     this.canvas.setWidth(width);
     this.canvas.setHeight(height);
@@ -378,16 +377,16 @@ addLayer(layer: Layer): void {
     }
 
     const now = Date.now();
-    if (!this.lastUpdatedTime && Math.abs(this.lastUpdatedTime - now) < 100) {
+    if (!this.lastUpdatedTime || Math.abs(this.lastUpdatedTime - now) < 100) {
       return;
     }
     this.lastUpdatedTime = now;
 
-    const objects = canvas.getObjects();
+    const objects = canvas.getObjects() as ExtendedFabricObject[];
     let hasKeepZoom = false;
     for (let i = 0; i < objects.length; i += 1) {
       const object = objects[i];
-      if (object.keepOnZoom) {
+      if (object?.keepOnZoom) {
         object.set('scaleX', 1.0 / this.zoom);
         object.set('scaleY', 1.0 / this.zoom);
         object.setCoords();
@@ -399,7 +398,7 @@ addLayer(layer: Layer): void {
   }
 
   panzoom(e: PanZoomEvent): void {
-    const { width, height } = this.canvas;
+    const { width = 0, height = 0 } = this.canvas;
     const zoom = clamp(-e.dz, -height * 0.75, height * 0.75) / height;
 
     const prevZoom = 1 / this.zoom;
@@ -493,70 +492,80 @@ addLayer(layer: Layer): void {
   registerListeners(): void {
     const vm = this;
 
-    this.canvas.on('object:scaling', e => {
+    this.canvas.on('object:scaling', (e: ExtendedFabricEvent) => {
+      if (!e.target) return;
       if (e.target.class) {
         vm.emit(`${e.target.class}:scaling`, e.target.parent);
         e.target.parent.emit('scaling', e.target.parent);
         return;
       }
-      const group = e.target;
+      const group = e.target as ExtendedFabricGroup;
       if (!group.getObjects) return;
 
-      const objects = group.getObjects();
-      group.removeWithUpdate();
+      const objects = group.getObjects() as ExtendedFabricObject[];
+      group.removeWithUpdate(e.target);
       for (let i = 0; i < objects.length; i += 1) {
         const object = objects[i];
-        object.orgYaw = object.parent.yaw || 0;
-        object.fire('moving', object.parent);
-        vm.emit(`${object.class}:moving`, object.parent);
+        if (object) {
+          object.orgYaw = object.parent?.yaw || 0;
+          object.fire('moving', object.parent);
+          vm.emit(`${object.class}:moving`, object.parent);
+        }
       }
       vm.update();
       vm.canvas.requestRenderAll();
     });
 
-    this.canvas.on('object:rotating', e => {
+    this.canvas.on('object:rotating', (e: ExtendedFabricEvent) => {
+      if (!e.target) return;
       if (e.target.class) {
         vm.emit(`${e.target.class}:rotating`, e.target.parent, e.target.angle);
         e.target.parent.emit('rotating', e.target.parent, e.target.angle);
         return;
       }
-      const group = e.target;
+      const group = e.target as ExtendedFabricGroup;
       if (!group.getObjects) return;
-      const objects = group.getObjects();
+      const objects = group.getObjects() as ExtendedFabricObject[];
       for (let i = 0; i < objects.length; i += 1) {
         const object = objects[i];
-        if (object.class === 'marker') {
-          object._set('angle', -group.angle);
-          object.parent.yaw = -group.angle + (object.orgYaw || 0);
-          object.fire('moving', object.parent);
-          vm.emit(`${object.class}:moving`, object.parent);
+        if (object) {
+          if (object.class === 'marker') {
+            object._set('angle', -(group.angle || 0));
+            object.parent.yaw = -(group.angle || 0) + (object.orgYaw || 0);
+            object.fire('moving', object.parent);
+            vm.emit(`${object.class}:moving`, object.parent);
           object.fire('rotating', object.parent);
           vm.emit(`${object.class}:rotating`, object.parent);
+          }
         }
       }
       this.update();
     });
 
-    this.canvas.on('object:moving', e => {
+    this.canvas.on('object:moving', (e: ExtendedFabricEvent) => {
+      if (!e.target) return;
       if (e.target.class) {
         vm.emit(`${e.target.class}:moving`, e.target.parent);
         e.target.parent.emit('moving', e.target.parent);
         return;
       }
-      const group = e.target;
+      const group = e.target as ExtendedFabricGroup;
       if (!group.getObjects) return;
-      const objects = group.getObjects();
+      const objects = group.getObjects() as ExtendedFabricObject[];
       for (let i = 0; i < objects.length; i += 1) {
         const object = objects[i];
-        if (object.class) {
-          object.fire('moving', object.parent);
-          vm.emit(`${object.class}:moving`, object.parent);
+        if (object) {
+          if (object.class) {
+            object.fire('moving', object.parent);
+            vm.emit(`${object.class}:moving`, object.parent);
+          }
         }
       }
       this.update();
     });
 
-    this.canvas.on('object:moved', e => {
+    this.canvas.on('object:moved', (e: ExtendedFabricEvent) => {
+      if (!e.target) return;
       if (e.target.class) {
         vm.emit(`${e.target.class}dragend`, e);
         vm.emit(`${e.target.class}:moved`, e.target.parent);
@@ -564,14 +573,16 @@ addLayer(layer: Layer): void {
         this.update();
         return;
       }
-      const group = e.target;
+      const group = e.target as ExtendedFabricGroup;
       if (!group.getObjects) return;
-      const objects = group.getObjects();
+      const objects = group.getObjects() as ExtendedFabricObject[];
       for (let i = 0; i < objects.length; i += 1) {
         const object = objects[i];
-        if (object.class) {
-          object.fire('moved', object.parent);
-          vm.emit(`${object.class}:moved`, object.parent);
+        if (object) {
+          if (object.class) {
+            object.fire('moved', object.parent);
+            vm.emit(`${object.class}:moved`, object.parent);
+          }
         }
       }
       this.update();
@@ -588,11 +599,13 @@ addLayer(layer: Layer): void {
   }
 
   getMarkerById(id: string): any | null {
-    const objects = this.canvas.getObjects();
+    const objects = this.canvas.getObjects() as ExtendedFabricObject[];
     for (let i = 0; i < objects.length; i += 1) {
       const obj = objects[i];
-      if (obj.class === 'marker' && obj.parent?.id === id) {
-        return obj.parent;
+      if (obj) {
+        if (obj.class === 'marker' && obj.parent?.id === id) {
+          return obj.parent;
+        }
       }
     }
     return null;
@@ -600,11 +613,13 @@ addLayer(layer: Layer): void {
 
   getMarkers(): any[] {
     const list: any[] = [];
-    const objects = this.canvas.getObjects();
+    const objects = this.canvas.getObjects() as ExtendedFabricObject[];
     for (let i = 0; i < objects.length; i += 1) {
       const obj = objects[i];
-      if (obj.class === 'marker') {
-        list.push(obj.parent);
+      if (obj) {
+        if (obj.class === 'marker') {
+          list.push(obj.parent);
+        }
       }
     }
     return list;
