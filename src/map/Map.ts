@@ -180,8 +180,8 @@ addLayer(layer: Layer): void {
 
     if (layer.shape.keepOnZoom) {
       const scale = 1.0 / this.zoom;
-      layer.shape.set('scaleX', scale);
-      layer.shape.set('scaleY', scale);
+      layer.shape.set({'scaleX': scale});
+      layer.shape.set({'scaleY': scale});
       layer.shape.setCoords();
       this.emit(`${layer.class}scaling`, layer);
     }

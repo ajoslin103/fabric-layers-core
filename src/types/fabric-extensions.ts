@@ -27,7 +27,7 @@ export interface ExtendedFabricObject extends fabric.Object {
 /**
  * Extended fabric Group with additional methods and properties
  */
-export interface ExtendedFabricGroup extends fabric.Group {
+export interface ExtendedFabricGroup extends ExtendedFabricObject, fabric.Group {
   getObjects(): ExtendedFabricObject[];
   removeWithUpdate(obj: fabric.Object): fabric.Group;
   angle?: number;

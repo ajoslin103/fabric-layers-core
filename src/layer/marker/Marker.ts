@@ -3,7 +3,7 @@ import { Layer, LayerOptions } from '../Layer';
 import { Group } from '../Group';
 import { Point, PointLike } from '../../geometry/Point';
 import { Connector } from '../Connector';
-import { Layer as MapLayer } from '../../map/Map';
+import { ExtendedFabricGroup } from '../../types/fabric-extensions';
 
 export interface MarkerOptions extends LayerOptions {
   rotation?: number;
@@ -32,7 +32,7 @@ export class Marker extends Layer {
   public textObj?: fabric.Text;
   public image?: fabric.Image;
   public circle?: fabric.Circle;
-  public shape!: Group;
+  public shape!: ExtendedFabricGroup; // OVERRIDING INHERITED SHAPE TYPE
   public connectors: Connector[] = [];
   public style: any;
   public icon?: {
@@ -116,7 +116,7 @@ export class Marker extends Layer {
     if (this.textObj) {
       objects.push(this.textObj);
     }
-    this.shape = new Group(objects, this.style);
+    this.shape = new Group(objects, this.style) as ExtendedFabricGroup;
     this.links = this.links || [];
     this.addLinks();
     this.registerListeners();
@@ -267,7 +267,7 @@ export class Marker extends Layer {
     const vm = this;
     this.connectors.forEach(connector => {
       // Use type assertion to handle type compatibility with Map.Layer interface
-      vm._map?.addLayer(connector as unknown as MapLayer);
+      vm._map?.addLayer(connector as unknown as Layer);
     });
   }
 
