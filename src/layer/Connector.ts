@@ -2,6 +2,7 @@ import { Layer, LayerOptions } from './Layer';
 import { Line } from './vector/Line';
 import { Point } from '../geometry/Point';
 import EventEmitter2 from 'eventemitter2';
+import { ExtendedFabricObject } from '../types/fabric-extensions';
 
 export interface ConnectorEndpoint extends EventEmitter2 {
   position: Point;
@@ -25,7 +26,7 @@ export class Connector extends Layer {
   public end: ConnectorEndpoint;
   public strokeWidth: number;
   public color: string;
-  public shape!: Line; // Assigned in draw()
+  // public shape: Line; // Inherited from Layer
 
   constructor(start: ConnectorEndpoint, end: ConnectorEndpoint, options: ConnectorOptions = {}) {
     // Set default options
@@ -59,20 +60,24 @@ export class Connector extends Layer {
   }
 
   /**
-   * Register update listeners for start and end points
+   * Register update listeners to reset the connector line endpoints
    */
   protected registerListeners(): void {
     this.start.on('update:links', () => {
+      const x1 = this.start.position.x;
+      const y1 = this.start.position.y;
       this.shape.set({
-        x1: this.start.position.x,
-        y1: this.start.position.y
+        x1,
+        y1
       });
     });
 
     this.end.on('update:links', () => {
+      const x2 = this.end.position.x;
+      const y2 = this.end.position.y;
       this.shape.set({
-        x2: this.end.position.x,
-        y2: this.end.position.y
+        x2,
+        y2
       });
     });
   }
@@ -84,7 +89,7 @@ export class Connector extends Layer {
     this.shape = new Line(
       [this.start.position.x, this.start.position.y, this.end.position.x, this.end.position.y],
       this.style
-    );
+    ) as ExtendedFabricObject;
   }
 
   /**
