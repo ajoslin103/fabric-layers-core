@@ -1,4 +1,4 @@
-import { Point } from '../geometry/Point.js';
+import { Point } from '../geometry/Point';
 
 import { fabric } from 'fabric';
 const { Object: FabricObject, Group } = fabric;

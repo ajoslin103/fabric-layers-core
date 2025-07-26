@@ -3,6 +3,7 @@ import { fabric } from 'fabric';
 import { createTestContainer, cleanupTestContainer } from '../helpers/setup';
 import { Map } from '../../src/map/Map';
 import { ExtendedFabricObject } from '../../src/types/fabric-extensions';
+import { Layer } from '../../src/layer';
 
 describe('Map', () => {
   let container: HTMLDivElement;
@@ -32,13 +33,14 @@ describe('Map', () => {
     it('should create a canvas element', () => {
       const canvas = container.querySelector('canvas');
       expect(canvas).to.exist;
-      expect(canvas.id).to.equal('fabric-layers-canvas');
+      // TypeScript null check - we've verified it exists above, so we can safely assert it's not null
+      expect(canvas!.id).to.equal('fabric-layers-canvas');
     });
 
     it('should initialize with default options', () => {
-      expect(map.width).to.equal(800);
-      expect(map.height).to.equal(600);
-      expect(map.showGrid).to.be.false;
+      expect(map.get('width')).to.equal(800);
+      expect(map.get('height')).to.equal(600);
+      expect(map.get('showGrid')).to.be.false;
     });
   });
 
@@ -71,7 +73,7 @@ describe('Map', () => {
           resolve();
         });
         
-        map.addLayer(layer);
+        map.addLayer(layer as Layer);
       });
     });
 
@@ -87,7 +89,7 @@ describe('Map', () => {
       const layer = { shape: rect, class: 'test' };
       
       return new Promise<void>((resolve) => {
-        map.addLayer(layer);
+        map.addLayer(layer as Layer);
         
         map.on('test:removed', (removedLayer) => {
           expect(removedLayer).to.equal(layer);
@@ -95,7 +97,7 @@ describe('Map', () => {
           resolve();
         });
         
-        map.removeLayer(layer);
+        map.removeLayer(layer as Layer);
       });
     });
   });
