@@ -1,5 +1,10 @@
 module.exports = {
   presets: [
+    // TypeScript must run BEFORE any class feature transforms
+    ['@babel/preset-typescript', {
+      allowDeclareFields: true,
+      onlyRemoveTypeImports: true
+    }],
     ['@babel/preset-env', {
       targets: {
         browsers: ['> 0.25%, not dead'],
@@ -11,6 +16,6 @@ module.exports = {
     }]
   ],
   plugins: [
-    // No additional plugins necessary unless you need legacy transforms
+    '@babel/plugin-transform-runtime'
   ]
 };
